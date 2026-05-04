@@ -1,4 +1,8 @@
-const API_URL = import.meta.env.VITE_API_URL || 'https://batinnov-api.onrender.com';
+// En dev : proxy Vite évite le CORS (vite.config.js)
+// En prod : utilise l'URL complète via VITE_API_URL
+const API_URL = import.meta.env.PROD
+  ? (import.meta.env.VITE_API_URL || 'https://batinnov-api.onrender.com')
+  : '';  // vide = proxy local Vite
 
 export const getToken = () => localStorage.getItem('batinnov_token');
 export const setToken = (t) => localStorage.setItem('batinnov_token', t);

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { authAPI } from '../services/api';
 import './InscriptionClient.css';
 
 function InscriptionClient() {
@@ -13,10 +14,16 @@ function InscriptionClient() {
     nom: '',
     email: '',
     telephone: '',
+    motDePasse: '',
+    confirmMotDePasse: '',
     adresse: '',
     ville: '',
     codePostal: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
   const TOTAL_STEPS = 4;
 
@@ -49,13 +56,31 @@ function InscriptionClient() {
   const canNext = () => {
     if (step === 1) return form.service !== '';
     if (step === 2) return form.description.length >= 20 && form.budget && form.delai;
-    if (step === 3) return form.prenom && form.nom && form.email && form.telephone;
+    if (step === 3) return form.prenom && form.nom && form.email && form.telephone && form.motDePasse.length >= 8 && form.motDePasse === form.confirmMotDePasse;
     return true;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setStep(5); // Page de confirmation
+    setError('');
+    setLoading(true);
+    try {
+      await authAPI.registerClient({
+        email: form.email,
+        motDePasse: form.motDePasse,
+        nom: form.nom,
+        prenom: form.prenom,
+        telephone: form.telephone,
+        adresse: form.adresse,
+        codePostal: form.codePostal,
+        ville: form.ville
+      });
+      setStep(5); // Confirmation
+    } catch (err) {
+      setError(err.message || 'Une erreur est survenue. Réessayez.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -212,6 +237,48 @@ function InscriptionClient() {
                 onChange={e => update('telephone', e.target.value)}
               />
             </div>
+
+            <div className="form-group">
+              <label>Mot de passe * <span style={{ color: '#999', fontWeight: 400, fontSize: 13 }}>(8 caractères min.)</span></label>
+              <div className="password-field">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={form.motDePasse}
+                  onChange={e => update('motDePasse', e.target.value)}
+                />
+                <button type="button" className="toggle-pwd" onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? '🙈' : '👁'}
+                </button>
+              </div>
+              {form.motDePasse.length > 0 && form.motDePasse.length < 8 && (
+                <span style={{ fontSize: 13, color: '#DC2626', marginTop: 4, display: 'block' }}>
+                  Minimum 8 caractères
+                </span>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label>Confirmer le mot de passe *</label>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={form.confirmMotDePasse}
+                onChange={e => update('confirmMotDePasse', e.target.value)}
+                style={{ borderColor: form.confirmMotDePasse && form.motDePasse !== form.confirmMotDePasse ? '#DC2626' : '' }}
+              />
+              {form.confirmMotDePasse && form.motDePasse !== form.confirmMotDePasse && (
+                <span style={{ fontSize: 13, color: '#DC2626', marginTop: 4, display: 'block' }}>
+                  Les mots de passe ne correspondent pas
+                </span>
+              )}
+              {form.confirmMotDePasse && form.motDePasse === form.confirmMotDePasse && form.motDePasse.length >= 8 && (
+                <span style={{ fontSize: 13, color: '#4A7A5C', marginTop: 4, display: 'block', fontWeight: 700 }}>
+                  ✓ Parfait !
+                </span>
+              )}
+            </div>
+
           </div>
         )}
 
@@ -263,6 +330,12 @@ function InscriptionClient() {
               </ul>
             </div>
 
+            {error && (
+              <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626', padding: '12px 16px', borderRadius: 8, fontSize: 14, textAlign: 'center', marginTop: 8 }}>
+                {error}
+              </div>
+            )}
+
             <p className="rgpd-text">
               En soumettant ce formulaire, vous acceptez nos{' '}
               <Link to="/cgv">CGV</Link> et notre{' '}
@@ -306,9 +379,9 @@ function InscriptionClient() {
               <button
                 className="btn-next"
                 onClick={handleSubmit}
-                disabled={!form.adresse || !form.ville || !form.codePostal}
+                disabled={loading || !form.adresse || !form.ville || !form.codePostal}
               >
-                Envoyer ma demande →
+                {loading ? 'Création du compte...' : 'Créer mon compte →'}
               </button>
             )}
           </div>
