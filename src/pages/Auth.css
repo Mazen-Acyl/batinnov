@@ -1,0 +1,251 @@
+/* ===== AUTH PAGES STYLE BATINNOV ===== */
+.auth-page {
+  min-height: 100vh;
+  background: #F5F5F0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  font-family: 'Nunito', sans-serif;
+}
+
+.auth-wrapper {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 40px 36px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.06);
+  text-align: center;
+}
+
+.auth-logo {
+  display: inline-block;
+  font-family: 'Nunito', sans-serif;
+  font-size: 26px;
+  font-weight: 900;
+  color: #000;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+
+.auth-icon-box {
+  width: 64px;
+  height: 64px;
+  background: #F0F5F2;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.auth-wrapper h1 {
+  font-size: 24px;
+  font-weight: 900;
+  color: #000;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: #888;
+  line-height: 1.6;
+  margin-bottom: 28px;
+  font-weight: 500;
+}
+
+/* FORM */
+.auth-form {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-field label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #888;
+  letter-spacing: 0.08em;
+}
+
+.auth-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border: 1.5px solid #EBEBEB;
+  border-radius: 10px;
+  background: #FAFAFA;
+  transition: border-color 0.2s;
+}
+
+.auth-input-wrap:focus-within {
+  border-color: #4A7A5C;
+  background: #fff;
+}
+
+.auth-input-wrap input {
+  flex: 1;
+  border: none;
+  background: none;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  color: #000;
+  outline: none;
+}
+
+.auth-input-wrap input::placeholder {
+  color: #CCC;
+}
+
+/* BOUTON */
+.auth-btn {
+  width: 100%;
+  padding: 16px;
+  background: #4A7A5C;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 4px;
+  text-decoration: none;
+}
+
+.auth-btn:hover {
+  background: #2E5A3F;
+  transform: translateY(-1px);
+}
+
+.auth-btn:disabled {
+  background: #CCC;
+  cursor: not-allowed;
+}
+
+/* BACK LINK */
+.auth-back {
+  display: block;
+  margin-top: 20px;
+  font-size: 14px;
+  color: #888;
+  font-weight: 600;
+  text-align: center;
+  transition: color 0.2s;
+}
+
+.auth-back:hover { color: #4A7A5C; }
+
+/* OTP */
+.otp-inputs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 8px 0;
+}
+
+.otp-input {
+  width: 48px;
+  height: 56px;
+  border: 2px solid #EBEBEB;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 800;
+  font-family: 'Nunito', sans-serif;
+  color: #000;
+  background: #FAFAFA;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.otp-input:focus {
+  border-color: #4A7A5C;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(74,122,92,0.1);
+}
+
+.auth-error {
+  font-size: 13px;
+  color: #DC2626;
+  text-align: center;
+  font-weight: 600;
+}
+
+.auth-resend {
+  display: block;
+  margin: 16px auto 0;
+  background: none;
+  border: none;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  color: #4A7A5C;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.auth-demo-hint {
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: #FFF9E6;
+  border: 1px solid #FFE066;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #888;
+  text-align: center;
+}
+
+/* SUCCESS */
+.auth-success {
+  text-align: center;
+}
+
+.success-icon {
+  width: 64px;
+  height: 64px;
+  background: #4A7A5C;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin: 0 auto 20px;
+}
+
+.auth-success h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #000;
+  margin-bottom: 10px;
+}
+
+.auth-success p {
+  font-size: 15px;
+  color: #666;
+  line-height: 1.6;
+}
+
+@media (max-width: 480px) {
+  .auth-wrapper {
+    padding: 32px 20px;
+  }
+  .otp-input {
+    width: 42px;
+    height: 50px;
+    font-size: 20px;
+  }
+}
