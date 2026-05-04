@@ -15,6 +15,7 @@ import VerificationOTP from './pages/VerificationOTP';
 import FAQ from './pages/FAQ';
 import './index.css';
 
+//nothing
 function App() {
   return (
     <BrowserRouter>
