@@ -1,9 +1,14 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import './DashboardPro.css';
 
 function DashboardPro() {
   const [activePage, setActivePage] = useState('dashboard');
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => { logout(); navigate('/'); };
   const [menuOpen, setMenuOpen] = useState(false);
 
   const pro = {
@@ -37,11 +42,41 @@ function DashboardPro() {
     { id: 3, client: 'Robert V.', service: 'Rénovation électrique', adresse: 'Riom (63)', budget: '800 €', date: 'Hier', urgent: false }
   ];
 
-  const messages = [
-    { id: 1, client: 'Marie L.', texte: "Bonjour, est-ce que vous pouvez venir mercredi matin ?", heure: '10:32', lu: false },
-    { id: 2, client: 'Thomas D.', texte: "Merci pour le devis, je l'accepte !", heure: '09:15', lu: false },
-    { id: 3, client: 'Pierre R.', texte: "Parfait, à bientôt !", heure: 'Hier', lu: true }
-  ];
+  const [conversations, setConversations] = useState([
+    {
+      id: 1, nom: 'Marie L.', avatar: 'ML', lu: false,
+      messages: [
+        { id: 1, texte: "Bonjour, est-ce que vous pouvez venir mercredi matin ?", de: 'eux', heure: '10:32' },
+      ]
+    },
+    {
+      id: 2, nom: 'Thomas D.', avatar: 'TD', lu: false,
+      messages: [
+        { id: 1, texte: "Merci pour le devis, je l'accepte !", de: 'eux', heure: '09:15' },
+        { id: 2, texte: "Parfait Thomas ! Je confirme le rendez-vous pour le 15.", de: 'moi', heure: '09:20' },
+      ]
+    },
+    {
+      id: 3, nom: 'Pierre R.', avatar: 'PR', lu: true,
+      messages: [
+        { id: 1, texte: "Parfait, à bientôt !", de: 'eux', heure: 'Hier' },
+      ]
+    }
+  ]);
+  const [selectedConv, setSelectedConv] = useState(null);
+  const [draft, setDraft] = useState('');
+
+  const sendMessage = () => {
+    if (!draft.trim() || selectedConv === null) return;
+    setConversations(prev => prev.map(c =>
+      c.id === selectedConv
+        ? { ...c, lu: true, messages: [...c.messages, { id: Date.now(), texte: draft, de: 'moi', heure: "À l'instant" }] }
+        : c
+    ));
+    setDraft('');
+  };
+
+  const convActive = conversations.find(c => c.id === selectedConv);
 
   const statutConfig = {
     en_cours: { label: 'En cours', color: '#E87D50', bg: '#FFF5F0' },
@@ -53,7 +88,7 @@ function DashboardPro() {
     { id: 'dashboard', label: 'Tableau de bord' },
     { id: 'leads', label: 'Leads', badge: leads.length },
     { id: 'chantiers', label: 'Chantiers' },
-    { id: 'messages', label: 'Messages', badge: messages.filter(m => !m.lu).length },
+    { id: 'messages', label: 'Messages', badge: conversations.filter(c => !c.lu).length },
     { id: 'documents', label: 'Documents' },
     { id: 'facturation', label: 'Facturation' },
   ];
@@ -203,15 +238,15 @@ function DashboardPro() {
                   <h3>Messages récents</h3>
                   <button className="dp-link" onClick={() => setActivePage('messages')}>Voir tout →</button>
                 </div>
-                {messages.map(m => (
-                  <div key={m.id} className={`dp-msg-row ${!m.lu ? 'unread' : ''}`}>
-                    <div className="dp-msg-avatar">{m.client[0]}</div>
+                {conversations.map(c => (
+                  <div key={c.id} className={`dp-msg-row ${!c.lu ? 'unread' : ''}`}>
+                    <div className="dp-msg-avatar">{c.avatar}</div>
                     <div className="dp-msg-body">
-                      <strong>{m.client}</strong>
-                      <span>{m.texte}</span>
+                      <strong>{c.nom}</strong>
+                      <span>{c.messages.at(-1)?.texte}</span>
                     </div>
-                    <span className="dp-time">{m.heure}</span>
-                    {!m.lu && <span className="dp-unread-dot" />}
+                    <span className="dp-time">{c.messages.at(-1)?.heure}</span>
+                    {!c.lu && <span className="dp-unread-dot" />}
                   </div>
                 ))}
               </div>
@@ -275,22 +310,70 @@ function DashboardPro() {
           {/* ── MESSAGES ── */}
           {activePage === 'messages' && (
             <div className="dp-page">
-              <div className="dp-card">
-                <div className="dp-card-head"><h3>Mes messages</h3></div>
-                {messages.map(m => (
-                  <div key={m.id} className={`dp-msg-full ${!m.lu ? 'unread' : ''}`}>
-                    <div className="dp-msg-avatar">{m.client[0]}</div>
-                    <div className="dp-msg-full-body">
-                      <div className="dp-msg-full-head">
-                        <strong>{m.client}</strong>
-                        <span>{m.heure}</span>
+              <div className="chat-layout">
+
+                {/* LISTE */}
+                <div className="chat-sidebar">
+                  {conversations.map(conv => (
+                    <button
+                      key={conv.id}
+                      className={`chat-conv-item ${selectedConv === conv.id ? 'active' : ''}`}
+                      onClick={() => {
+                        setSelectedConv(conv.id);
+                        setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, lu: true } : c));
+                      }}
+                    >
+                      <div className="chat-conv-avatar pro">{conv.avatar}</div>
+                      <div className="chat-conv-info">
+                        <div className="chat-conv-name">
+                          <strong>{conv.nom}</strong>
+                          {!conv.lu && <span className="chat-unread-dot" />}
+                        </div>
+                        <span className="chat-conv-preview">{conv.messages.at(-1)?.texte}</span>
                       </div>
-                      <p>{m.texte}</p>
-                      <button className="dp-btn-sm">Répondre →</button>
+                    </button>
+                  ))}
+                </div>
+
+                {/* FENETRE */}
+                <div className="chat-window">
+                  {!convActive ? (
+                    <div className="chat-empty">
+                      <p>Sélectionnez une conversation</p>
                     </div>
-                    {!m.lu && <span className="dp-unread-dot" />}
-                  </div>
-                ))}
+                  ) : (
+                    <>
+                      <div className="chat-header">
+                        <div className="chat-conv-avatar pro">{convActive.avatar}</div>
+                        <strong>{convActive.nom}</strong>
+                      </div>
+
+                      <div className="chat-messages">
+                        {convActive.messages.map(msg => (
+                          <div key={msg.id} className={`chat-bubble-wrap ${msg.de === 'moi' ? 'moi' : 'eux'}`}>
+                            <div className="chat-bubble pro">
+                              <p>{msg.texte}</p>
+                              <span className="chat-time">{msg.heure}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="chat-input-bar">
+                        <input
+                          type="text"
+                          placeholder="Écrire un message..."
+                          value={draft}
+                          onChange={e => setDraft(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && sendMessage()}
+                        />
+                        <button className="chat-send-btn pro" onClick={sendMessage}>
+                          Envoyer
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -386,9 +469,9 @@ function DashboardPro() {
                   <div className="dp-form-group"><label>SIRET</label><input defaultValue="123 456 789 00012" /></div>
                   <div className="dp-form-group"><label>Ville</label><input defaultValue="Clermont-Ferrand" /></div>
                 </div>
-                <button className="dp-btn-primary" style={{ marginTop: 8 }}>Sauvegarder</button>
-                <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid #EBEBEB' }}>
-                  <Link to="/" className="dp-logout-btn">↩ Déconnexion</Link>
+                <div className="profil-save-row" style={{ marginTop: 8 }}>
+                  <button className="dp-btn-primary">Sauvegarder</button>
+                  <button onClick={handleLogout} className="btn-deconnexion">Se déconnecter</button>
                 </div>
               </div>
             </div>

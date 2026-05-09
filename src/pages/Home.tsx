@@ -72,9 +72,16 @@ function Home() {
                 Trouvez le bon artisan pour tous vos travaux du bâtiment.
                 Rénovation, aménagement, adaptation PMR ou borne électrique.
               </p>
-              <Link to="/inscription-client" className="btn-hero">
+              <a
+                href="#services-section"
+                className="btn-hero"
+                onClick={e => {
+                  e.preventDefault();
+                  document.getElementById('services-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
                 Demander un devis gratuit
-              </Link>
+              </a>
             </div>
             <div className="hero-image">
               <img src="/images/hero.jpg" alt="Artisan BATINNOV" />

@@ -1,4 +1,4 @@
-        import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Connexion.css';
 
@@ -79,7 +79,7 @@ function ConnexionPro() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
-                style={{ '--focus-color': '#E87D50' }}
+                style={{ '--focus-color': '#E87D50' } as React.CSSProperties}
               />
               <button
                 type="button"

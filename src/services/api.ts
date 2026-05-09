@@ -4,9 +4,24 @@ const API_URL = import.meta.env.PROD
   ? (import.meta.env.VITE_API_URL || 'https://batinnov-api.onrender.com')
   : '';  // vide = proxy local Vite
 
-export const getToken = () => localStorage.getItem('batinnov_token');
-export const setToken = (t) => localStorage.setItem('batinnov_token', t);
-export const removeToken = () => localStorage.removeItem('batinnov_token');
+export type UserRole = 'client' | 'prestataire' | 'admin';
+
+export interface User {
+  id: number;
+  email: string;
+  role: UserRole;
+  prenom?: string;
+  nom?: string;
+}
+
+export interface AuthResult {
+  token: string;
+  user: User;
+}
+
+export const getToken = (): string | null => localStorage.getItem('batinnov_token');
+export const setToken = (t: string): void => localStorage.setItem('batinnov_token', t);
+export const removeToken = (): void => localStorage.removeItem('batinnov_token');
 
 const h = (auth = true) => {
   const headers = { 'Content-Type': 'application/json' };
@@ -43,6 +58,11 @@ export const authAPI = {
   },
   changePassword: async (body) => {
     return r(await fetch(`${API_URL}/api/auth/password`, { method: 'PATCH', headers: h(), body: JSON.stringify(body) }));
+  },
+  loginGoogle: async (googleToken) => {
+    const data = await r(await fetch(`${API_URL}/api/auth/google`, { method: 'POST', headers: h(false), body: JSON.stringify({ googleToken }) }));
+    if (data?.data?.token) setToken(data.data.token);
+    return data.data;
   },
   logout: () => removeToken(),
   isAuthenticated: () => !!getToken()

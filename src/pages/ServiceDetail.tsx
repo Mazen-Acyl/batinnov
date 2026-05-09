@@ -100,9 +100,9 @@ const DELAIS = [
 ];
 
 function ServiceDetail() {
-  const { serviceId } = useParams();
+  const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
-  const service = SERVICES[serviceId];
+  const service = SERVICES[serviceId!];
 
   const [step, setStep] = useState(1);
   const TOTAL = 3;
@@ -112,7 +112,7 @@ function ServiceDetail() {
     description: '',
     budget: '',
     delai: '',
-    answers: {}
+    answers: {} as Record<string, string>
   });
 
   if (!service) {

@@ -19,11 +19,11 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 24px;
-  height: 68px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 32px;
+  gap: 16px;
 }
 
 .client-logo {
@@ -40,7 +40,7 @@
 .client-nav {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex: 1;
   justify-content: center;
 }
@@ -48,10 +48,10 @@
 .client-nav-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
+  gap: 5px;
+  padding: 7px 12px;
   font-family: 'Nunito', sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: #555555;
   background: none;
@@ -85,17 +85,17 @@
 .client-navbar-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
 .btn-nouvelle-demande {
-  padding: 10px 18px;
+  padding: 8px 14px;
   background: #4A7A5C;
   color: white;
   border-radius: 8px;
   font-family: 'Nunito', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
   transition: all 0.2s;
@@ -769,6 +769,14 @@
 
 .btn-save-client:hover { background: #2E5A3F; }
 
+.profil-save-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
 .profil-danger-zone {
   margin-top: 32px;
   padding-top: 32px;
@@ -1274,4 +1282,451 @@
 .rdv-btn.reporter {
   background: #F5F5F5;
   color: #555;
+}
+
+/* ===== CHAT ===== */
+.chat-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  height: calc(100vh - 160px);
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+  border: 1.5px solid #EBEBEB;
+}
+
+.chat-sidebar {
+  border-right: 1.5px solid #F0F0F0;
+  overflow-y: auto;
+  background: #FAFAFA;
+}
+
+.chat-conv-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #F0F0F0;
+  cursor: pointer;
+  text-align: left;
+  font-family: 'Nunito', sans-serif;
+  transition: background 0.15s;
+}
+
+.chat-conv-item:hover { background: #F0F5F2; }
+.chat-conv-item.active { background: #E8F2EC; }
+
+.chat-conv-avatar {
+  width: 40px;
+  height: 40px;
+  background: #4A7A5C;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.chat-conv-avatar.pro {
+  background: #E87D50;
+}
+
+.chat-conv-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-conv-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.chat-conv-name strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000;
+}
+
+.chat-unread-dot {
+  width: 8px;
+  height: 8px;
+  background: #4A7A5C;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chat-conv-preview {
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  max-width: 170px;
+}
+
+.chat-window {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #BBBBBB;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1.5px solid #F0F0F0;
+  background: #fff;
+}
+
+.chat-header strong {
+  font-size: 15px;
+  font-weight: 800;
+  color: #000;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #F8FAF9;
+}
+
+.chat-bubble-wrap {
+  display: flex;
+}
+
+.chat-bubble-wrap.moi {
+  justify-content: flex-end;
+}
+
+.chat-bubble-wrap.eux {
+  justify-content: flex-start;
+}
+
+.chat-bubble {
+  max-width: 68%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: #EBEBEB;
+}
+
+.chat-bubble-wrap.moi .chat-bubble {
+  background: #4A7A5C;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bubble-wrap.eux .chat-bubble {
+  background: #fff;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.chat-bubble p {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.chat-bubble-wrap.moi .chat-bubble p { color: #fff; }
+.chat-bubble-wrap.eux .chat-bubble p { color: #1A1A1A; }
+
+.chat-time {
+  font-size: 11px;
+  opacity: 0.65;
+  display: block;
+  text-align: right;
+}
+
+.chat-input-bar {
+  display: flex;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1.5px solid #F0F0F0;
+  background: #fff;
+}
+
+.chat-input-bar input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1.5px solid #E5E5E5;
+  border-radius: 24px;
+  font-size: 14px;
+  font-family: 'Nunito', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.chat-input-bar input:focus {
+  border-color: #4A7A5C;
+}
+
+.chat-send-btn {
+  padding: 12px 22px;
+  background: #4A7A5C;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.chat-send-btn:hover { background: #2E5A3F; }
+
+.chat-send-btn.pro { background: #E87D50; }
+.chat-send-btn.pro:hover { background: #C84A31; }
+
+@media (max-width: 640px) {
+  .chat-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 220px 1fr;
+    height: calc(100vh - 120px);
+  }
+  .chat-sidebar { border-right: none; border-bottom: 1.5px solid #F0F0F0; }
+  .chat-conv-preview { max-width: 200px; }
+}
+
+/* ===== CHANTIERS PAGE ===== */
+.chantiers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.chantier-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+  border: 1.5px solid #EBEBEB;
+}
+
+.chantier-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.chantier-card-header h3 {
+  font-size: 18px;
+  font-weight: 800;
+  color: #000;
+  margin-bottom: 6px;
+}
+
+.chantier-artisan {
+  font-size: 13px;
+  color: #888;
+  font-weight: 600;
+}
+
+.chantier-card .chantier-rdv {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: right;
+}
+
+.rdv-label {
+  font-size: 11px;
+  color: #999;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chantier-card .chantier-rdv strong {
+  font-size: 13px;
+  color: #4A7A5C;
+  font-weight: 800;
+}
+
+.chantier-progress-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.chantier-progress-bar-wrap .chantier-progress-bar {
+  flex: 1;
+}
+
+.chantier-progress-pct {
+  font-size: 14px;
+  font-weight: 800;
+  color: #4A7A5C;
+  white-space: nowrap;
+}
+
+.chantier-etape {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #BBBBBB;
+  font-weight: 600;
+  padding: 4px 0;
+}
+
+.chantier-etape.fait { color: #4A7A5C; }
+.chantier-etape.encours { color: #000; font-weight: 800; }
+
+.chantier-etape .etape-dot {
+  font-size: 16px;
+  width: auto;
+  height: auto;
+  background: none;
+  color: #BBBBBB;
+}
+
+.chantier-etape.fait .etape-dot { color: #4A7A5C; }
+.chantier-etape.encours .etape-dot { color: #E87D50; }
+
+/* ===== DOCUMENTS PAGE ===== */
+.doc-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.doc-info {
+  flex: 1;
+}
+
+.doc-info strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 3px;
+}
+
+.doc-info span {
+  font-size: 12px;
+  color: #999;
+}
+
+.doc-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.doc-taille {
+  font-size: 12px;
+  color: #AAAAAA;
+  font-weight: 600;
+}
+
+.doc-signe-badge {
+  background: #ECFDF5;
+  color: #10B981;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.btn-dl-doc {
+  padding: 7px 14px;
+  background: #F5F5F5;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #444;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.btn-dl-doc:hover { background: #EBEBEB; }
+
+/* ===== AGENDA PAGE ===== */
+.agenda-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1.5px solid #EBEBEB;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+}
+
+.agenda-date-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+  gap: 2px;
+  text-align: center;
+}
+
+.agenda-date {
+  font-size: 12px;
+  color: #888;
+  font-weight: 700;
+}
+
+.agenda-heure {
+  font-size: 22px;
+  color: #4A7A5C;
+  font-weight: 900;
+}
+
+.agenda-info {
+  flex: 1;
+}
+
+.agenda-info strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  color: #000;
+  margin-bottom: 4px;
+}
+
+.agenda-info span {
+  font-size: 13px;
+  color: #888;
+}
+
+.agenda-statut {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
 }

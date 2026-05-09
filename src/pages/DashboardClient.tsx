@@ -1,10 +1,15 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import './DashboardClient.css';
 
 function DashboardClient() {
   const [activePage, setActivePage] = useState('accueil');
   const [menuOpen, setMenuOpen] = useState(false);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => { logout(); navigate('/'); };
 
   const client = {
     prenom: 'Marie',
@@ -121,22 +126,42 @@ function DashboardClient() {
     { id: 2, heure: '09:00', titre: 'Vérification tableau électrique', artisan: 'Marc Leroy', duree: '1h', statut: 'a_confirmer', date: 'Lun. 5 mai' }
   ];
 
-  const messages = [
+  const [conversations, setConversations] = useState([
     {
       id: 1,
-      artisan: 'Marc Dupont',
-      texte: 'Bonjour, je suis disponible le 15 mai pour l\'installation.',
-      heure: '10:32',
-      lu: false
+      nom: 'Marc Dupont',
+      avatar: 'MD',
+      lu: false,
+      messages: [
+        { id: 1, texte: 'Bonjour, je suis disponible le 15 mai pour l\'installation.', de: 'eux', heure: '10:30' },
+        { id: 2, texte: 'Pouvez-vous confirmer l\'adresse exacte ?', de: 'eux', heure: '10:32' },
+      ]
     },
     {
       id: 2,
-      artisan: 'Sophie Bernard',
-      texte: 'Voici mon devis détaillé pour votre salle de bain.',
-      heure: 'Hier',
-      lu: true
+      nom: 'Sophie Bernard',
+      avatar: 'SB',
+      lu: true,
+      messages: [
+        { id: 1, texte: 'Voici mon devis détaillé pour votre salle de bain.', de: 'eux', heure: 'Hier' },
+        { id: 2, texte: 'Merci Sophie, je regarde ça et reviens vers vous.', de: 'moi', heure: 'Hier' },
+      ]
     }
-  ];
+  ]);
+  const [selectedConv, setSelectedConv] = useState(null);
+  const [draft, setDraft] = useState('');
+
+  const sendMessage = () => {
+    if (!draft.trim() || selectedConv === null) return;
+    setConversations(prev => prev.map(c =>
+      c.id === selectedConv
+        ? { ...c, lu: true, messages: [...c.messages, { id: Date.now(), texte: draft, de: 'moi', heure: "À l'instant" }] }
+        : c
+    ));
+    setDraft('');
+  };
+
+  const convActive = conversations.find(c => c.id === selectedConv);
 
   const statutConfig = {
     en_cours: { label: 'En cours', color: '#3B82F6', bg: '#EFF6FF' },
@@ -145,14 +170,13 @@ function DashboardClient() {
   };
 
   const navItems = [
-    { id: 'accueil', icon: '🏠', label: 'Mon espace' },
-    { id: 'demandes', icon: '📋', label: 'Mes demandes', badge: demandes.filter(d => d.statut !== 'termine').length },
-    { id: 'devis', icon: '💼', label: 'Mes devis', badge: artisans.length },
-    { id: 'chantiers', icon: '🔨', label: 'Mes chantiers' },
-    { id: 'documents', icon: '📄', label: 'Documents' },
-    { id: 'messages', icon: '💬', label: 'Messages', badge: messages.filter(m => !m.lu).length },
-    { id: 'agenda', icon: '📅', label: 'Agenda' },
-    { id: 'profil', icon: '👤', label: 'Mon profil' }
+    { id: 'accueil', label: 'Mon espace' },
+    { id: 'demandes', label: 'Demandes', badge: demandes.filter(d => d.statut !== 'termine').length },
+    { id: 'devis', label: 'Devis', badge: artisans.length },
+    { id: 'chantiers', label: 'Chantiers' },
+    { id: 'documents', label: 'Documents' },
+    { id: 'messages', label: 'Messages', badge: conversations.filter(c => !c.lu).length },
+    { id: 'agenda', label: 'Agenda' },
   ];
 
   return (
@@ -181,7 +205,7 @@ function DashboardClient() {
 
           {/* DROITE */}
           <div className="client-navbar-right">
-            <Link to="/services/renovation" className="btn-nouvelle-demande">
+            <Link to="/devis" className="btn-nouvelle-demande">
               + Nouvelle demande
             </Link>
             <button
@@ -214,7 +238,7 @@ function DashboardClient() {
                   <h1>Bonjour {client.prenom} 👋</h1>
                   <p>Retrouvez ici toutes vos demandes, devis et messages.</p>
                 </div>
-                <Link to="/services/renovation" className="btn-primary-green">
+                <Link to="/devis" className="btn-primary-green">
                   + Nouvelle demande
                 </Link>
               </div>
@@ -230,7 +254,7 @@ function DashboardClient() {
                   <span className="client-stat-label">Devis reçus</span>
                 </div>
                 <div className="client-stat">
-                  <span className="client-stat-num">{messages.filter(m => !m.lu).length}</span>
+                  <span className="client-stat-num">{conversations.filter(c => !c.lu).length}</span>
                   <span className="client-stat-label">Messages non lus</span>
                 </div>
                 <div className="client-stat">
@@ -299,7 +323,7 @@ function DashboardClient() {
             <div className="client-page">
               <div className="section-head">
                 <h1>Mes demandes</h1>
-                <Link to="/services/renovation" className="btn-primary-green">
+                <Link to="/devis" className="btn-primary-green">
                   + Nouvelle demande
                 </Link>
               </div>
@@ -377,28 +401,168 @@ function DashboardClient() {
             </div>
           )}
 
+          {/* ===== CHANTIERS ===== */}
+          {activePage === 'chantiers' && (
+            <div className="client-page">
+              <h1>Mes chantiers</h1>
+              <div className="chantiers-list">
+                {chantiers_detail.map(ch => (
+                  <div key={ch.id} className="chantier-card">
+                    <div className="chantier-card-header">
+                      <div>
+                        <h3>{ch.titre}</h3>
+                        <span className="chantier-artisan">Artisan : {ch.artisan}</span>
+                      </div>
+                      <div className="chantier-rdv">
+                        <span className="rdv-label">Prochain RDV</span>
+                        <strong>{ch.date_rdv}</strong>
+                      </div>
+                    </div>
+                    <div className="chantier-progress-bar-wrap">
+                      <div className="chantier-progress-bar">
+                        <div className="chantier-progress-fill" style={{ width: `${ch.avancement}%` }} />
+                      </div>
+                      <span className="chantier-progress-pct">{ch.avancement}%</span>
+                    </div>
+                    <div className="chantier-etapes">
+                      {ch.etapes.map((e, i) => (
+                        <div key={i} className={`chantier-etape ${e.fait ? 'fait' : ''} ${e.encours ? 'encours' : ''}`}>
+                          <span className="etape-dot">{e.fait ? '✓' : e.encours ? '◉' : '○'}</span>
+                          <span>{e.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ===== DOCUMENTS ===== */}
+          {activePage === 'documents' && (
+            <div className="client-page">
+              <h1>Documents</h1>
+              <div className="documents-list">
+                {documents.map(doc => (
+                  <div key={doc.id} className="document-row">
+                    <div className="doc-icon">
+                      {doc.type === 'Contrat' ? '📋' : doc.type === 'Devis' ? '💼' : '🧾'}
+                    </div>
+                    <div className="doc-info">
+                      <strong>{doc.nom}</strong>
+                      <span>{doc.type} · {doc.chantier} · {doc.date}</span>
+                    </div>
+                    <div className="doc-meta">
+                      <span className="doc-taille">{doc.taille}</span>
+                      {doc.signe && <span className="doc-signe-badge">Signé</span>}
+                    </div>
+                    <button className="btn-dl-doc">⬇ Télécharger</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ===== AGENDA ===== */}
+          {activePage === 'agenda' && (
+            <div className="client-page">
+              <h1>Agenda</h1>
+              <div className="agenda-list">
+                {agenda.map(ev => (
+                  <div key={ev.id} className="agenda-card">
+                    <div className="agenda-date-block">
+                      <span className="agenda-date">{ev.date}</span>
+                      <strong className="agenda-heure">{ev.heure}</strong>
+                    </div>
+                    <div className="agenda-info">
+                      <strong>{ev.titre}</strong>
+                      <span>Avec {ev.artisan} · Durée : {ev.duree}</span>
+                    </div>
+                    <span
+                      className="agenda-statut"
+                      style={{
+                        background: ev.statut === 'confirme' ? '#ECFDF5' : '#FFF5F2',
+                        color: ev.statut === 'confirme' ? '#10B981' : '#E87D50'
+                      }}
+                    >
+                      {ev.statut === 'confirme' ? 'Confirmé' : 'À confirmer'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* ===== MESSAGES ===== */}
           {activePage === 'messages' && (
             <div className="client-page">
-              <h1>Mes messages</h1>
-              <div className="messages-list-client">
-                {messages.map(msg => (
-                  <div key={msg.id} className={`message-client-card ${!msg.lu ? 'unread' : ''}`}>
-                    <div className="msg-avatar-client">{msg.artisan[0]}</div>
-                    <div className="msg-body">
-                      <div className="msg-header-client">
-                        <strong>{msg.artisan}</strong>
-                        <span>{msg.heure}</span>
+              <h1>Messages</h1>
+              <div className="chat-layout">
+
+                {/* LISTE DES CONVERSATIONS */}
+                <div className="chat-sidebar">
+                  {conversations.map(conv => (
+                    <button
+                      key={conv.id}
+                      className={`chat-conv-item ${selectedConv === conv.id ? 'active' : ''}`}
+                      onClick={() => {
+                        setSelectedConv(conv.id);
+                        setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, lu: true } : c));
+                      }}
+                    >
+                      <div className="chat-conv-avatar">{conv.avatar}</div>
+                      <div className="chat-conv-info">
+                        <div className="chat-conv-name">
+                          <strong>{conv.nom}</strong>
+                          {!conv.lu && <span className="chat-unread-dot" />}
+                        </div>
+                        <span className="chat-conv-preview">
+                          {conv.messages.at(-1)?.texte}
+                        </span>
                       </div>
-                      <p>{msg.texte}</p>
-                      <div className="msg-reply-box">
-                        <input type="text" placeholder="Écrire un message..." />
-                        <button className="btn-send">Envoyer</button>
-                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* FENETRE DE CHAT */}
+                <div className="chat-window">
+                  {!convActive ? (
+                    <div className="chat-empty">
+                      <p>Sélectionnez une conversation</p>
                     </div>
-                    {!msg.lu && <span className="unread-dot" />}
-                  </div>
-                ))}
+                  ) : (
+                    <>
+                      <div className="chat-header">
+                        <div className="chat-conv-avatar">{convActive.avatar}</div>
+                        <strong>{convActive.nom}</strong>
+                      </div>
+
+                      <div className="chat-messages">
+                        {convActive.messages.map(msg => (
+                          <div key={msg.id} className={`chat-bubble-wrap ${msg.de === 'moi' ? 'moi' : 'eux'}`}>
+                            <div className="chat-bubble">
+                              <p>{msg.texte}</p>
+                              <span className="chat-time">{msg.heure}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="chat-input-bar">
+                        <input
+                          type="text"
+                          placeholder="Écrire un message..."
+                          value={draft}
+                          onChange={e => setDraft(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && sendMessage()}
+                        />
+                        <button className="chat-send-btn" onClick={sendMessage}>
+                          Envoyer
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -440,11 +604,9 @@ function DashboardClient() {
                     <label>Adresse</label>
                     <input defaultValue={client.adresse} />
                   </div>
-                  <button className="btn-save-client">Sauvegarder</button>
-
-                  <div className="profil-danger-zone">
-                    <h3>Zone de danger</h3>
-                    <Link to="/" className="btn-deconnexion">Se déconnecter</Link>
+                  <div className="profil-save-row">
+                    <button className="btn-save-client">Sauvegarder</button>
+                    <button onClick={handleLogout} className="btn-deconnexion">Se déconnecter</button>
                   </div>
                 </div>
               </div>

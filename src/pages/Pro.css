@@ -378,8 +378,19 @@
   .upload-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .inscription-wrapper {
     padding: 24px;
   }
 }
+
+.siret-hint {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 5px;
+  font-family: 'Nunito', sans-serif;
+}
+
+.siret-hint.valid { color: #10B981; }
+.siret-hint.invalid { color: #E87D50; }

@@ -45,6 +45,7 @@
 }
 
 .navbar-service-btn {
+  display: inline-block;
   padding: 10px 16px;
   font-family: 'Nunito', sans-serif;
   font-size: 15px;
@@ -55,6 +56,7 @@
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  text-decoration: none;
 }
 
 .navbar-service-btn:hover {
@@ -115,6 +117,15 @@
 }
 
 .dropdown-list li:last-child { border-bottom: none; }
+
+.dropdown-list li a {
+  display: block;
+  color: #444444;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.dropdown-list li a:hover { color: var(--primary, #4A7A5C); }
 
 .dropdown-cta {
   display: block;
@@ -177,6 +188,103 @@
 .btn-devenir-pro:hover {
   background: #2E5A3F;
   transform: translateY(-1px);
+}
+
+/* USER MENU */
+.navbar-user-menu {
+  position: relative;
+}
+
+/* Pont invisible entre le bouton et le dropdown pour ne pas perdre le hover */
+.navbar-user-menu::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: -10px;
+  right: -10px;
+  height: 10px;
+}
+
+.navbar-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 6px;
+  background: none;
+  border: 2px solid var(--primary);
+  border-radius: 24px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: 'Nunito', sans-serif;
+}
+
+.navbar-user-btn:hover {
+  background: var(--primary-bg);
+}
+
+.navbar-user-avatar {
+  width: 28px;
+  height: 28px;
+  background: var(--primary);
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  font-family: 'Nunito', sans-serif;
+}
+
+.navbar-user-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 200px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+  animation: dropdownFade 0.15s ease-out;
+}
+
+.user-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1A1A1A;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.user-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.user-dropdown-item:hover {
+  background: var(--primary-bg);
+}
+
+.user-dropdown-logout {
+  color: #E53E3E;
+}
+
+.user-dropdown-logout:hover {
+  background: #fff5f5;
 }
 
 @media (max-width: 1024px) {

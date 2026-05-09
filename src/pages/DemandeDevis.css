@@ -1,0 +1,388 @@
+.devis-page {
+  min-height: 100vh;
+  background: var(--primary-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  font-family: 'Nunito', sans-serif;
+}
+
+.devis-wrapper {
+  width: 100%;
+  max-width: 520px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 40px 36px;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.devis-logo {
+  display: inline-block;
+  font-family: 'Nunito', sans-serif;
+  font-size: 26px;
+  font-weight: 900;
+  color: #000000;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+/* PROGRESS */
+.devis-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.devis-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #E5E5E5;
+  background: #ffffff;
+  color: #BBBBBB;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.devis-progress-line {
+  width: 72px;
+  height: 2px;
+  background: #E5E5E5;
+  transition: background 0.3s ease;
+}
+
+.devis-progress-line.done {
+  background: var(--primary);
+}
+
+.devis-dot.active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.devis-dot.done {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #ffffff;
+}
+
+/* STEP CONTENT */
+.devis-step {
+  text-align: left;
+}
+
+.devis-step h2 {
+  font-size: 20px;
+  font-weight: 800;
+  color: #000000;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.devis-subtitle {
+  font-size: 14px;
+  color: #888888;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.devis-back {
+  background: none;
+  border: none;
+  color: #888888;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Nunito', sans-serif;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 16px;
+  display: block;
+  transition: color 0.15s;
+}
+
+.devis-back:hover { color: #444444; }
+
+/* SERVICES GRID */
+.devis-services-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.devis-service-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border: 2px solid #E5E5E5;
+  border-radius: 12px;
+  background: #FAFAFA;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+  font-family: 'Nunito', sans-serif;
+}
+
+.devis-service-card:hover {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+}
+
+.devis-service-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+}
+
+.devis-service-card strong {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1A1A1A;
+}
+
+.devis-service-card span {
+  font-size: 12px;
+  color: #888888;
+  line-height: 1.4;
+}
+
+/* FORM ELEMENTS */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444444;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #E5E5E5;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #000000;
+  font-family: 'Nunito', sans-serif;
+  background: #FAFAFA;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: var(--primary);
+  background: #ffffff;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #BBBBBB;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.devis-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* BUTTONS */
+.btn-devis-primary {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+
+.btn-devis-primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(74, 122, 92, 0.3);
+}
+
+.btn-devis-primary:disabled {
+  background: #CCCCCC;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-devis-secondary {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: #ffffff;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  border-radius: 10px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.btn-devis-secondary:hover {
+  background: var(--primary-bg);
+}
+
+/* DIVIDER */
+.devis-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  color: #CCCCCC;
+  font-size: 13px;
+}
+
+.devis-divider::before,
+.devis-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #E5E5E5;
+}
+
+/* AUTH FORM */
+.devis-auth-form {
+  margin-bottom: 4px;
+}
+
+.devis-pwd-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.devis-pwd-wrap input {
+  padding-right: 70px;
+}
+
+.devis-toggle-pwd {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  font-family: 'Nunito', sans-serif;
+}
+
+.devis-forgot {
+  display: block;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: #888888;
+  margin-top: -8px;
+  margin-bottom: 16px;
+}
+
+.devis-forgot:hover { color: var(--primary); }
+
+.form-error-banner {
+  background: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  color: #DC2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+/* SUCCESS */
+.devis-success-wrapper {
+  text-align: center;
+}
+
+.devis-success-icon {
+  width: 64px;
+  height: 64px;
+  background: var(--primary);
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0 auto 20px;
+}
+
+.devis-success-wrapper h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.devis-success-wrapper p {
+  font-size: 15px;
+  color: #666666;
+  margin-bottom: 24px;
+}
+
+/* RESPONSIVE */
+.btn-google-devis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px;
+  background: #ffffff;
+  border: 2px solid #E0E0E0;
+  border-radius: 10px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1A1A1A;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-google-devis:hover {
+  border-color: #AAAAAA;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+@media (max-width: 520px) {
+  .devis-wrapper { padding: 28px 20px; }
+  .devis-services-grid { grid-template-columns: 1fr; }
+  .devis-row { grid-template-columns: 1fr; }
+}
