@@ -1,8 +1,5 @@
-// En dev : proxy Vite évite le CORS (vite.config.js)
-// En prod : utilise l'URL complète via VITE_API_URL
-const API_URL = import.meta.env.PROD
-  ? (import.meta.env.VITE_API_URL || 'https://batinnov-api.onrender.com')
-  : '';  // vide = proxy local Vite
+// Chemins relatifs partout : Vite proxy en dev, Vercel rewrites en prod
+const API_URL = '';
 
 export type UserRole = 'client' | 'prestataire' | 'admin';
 
