@@ -1,7 +1,7 @@
 /* ============================================================
-   DASHBOARD ADMIN — Design System Sombre/Vert
-   Sidebar: #1A2E1C | Accent: #4A7A5C | BG: #F0F2F5
-   Surface: #FFFFFF | Border: #E5E7EB
+   DASHBOARD ADMIN — Design System Chaleureux
+   Sidebar: #1A2E1C | Hero: #1C1A27 | BG: #EDEBE5
+   Surface: #FFFFFF | Border: #E5E2DA | Accent: #6FCF97 / #E87D50
    ============================================================ */
 
 /* ── Base ── */
@@ -9,7 +9,7 @@
   display: grid;
   grid-template-columns: 240px 1fr;
   min-height: 100vh;
-  background: #F0F2F5;
+  background: #EDEBE5;
   font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
   color: #111827;
 }
@@ -46,7 +46,7 @@
 .admin-sidebar-tag {
   font-size: 9px;
   font-weight: 800;
-  color: #4A7A5C;
+  color: rgba(111, 207, 151, 0.5);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   margin-bottom: 28px;
@@ -71,7 +71,7 @@
   font-family: 'Nunito', sans-serif;
   font-size: 13.5px;
   font-weight: 700;
-  color: #6B9E7A;
+  color: #6FCF97;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
   text-align: left;
@@ -85,7 +85,7 @@
 }
 
 .admin-nav-item.active {
-  background: rgba(74, 122, 92, 0.25);
+  background: rgba(111, 207, 151, 0.12);
   color: #ffffff;
   position: relative;
 }
@@ -97,7 +97,7 @@
   top: 6px;
   bottom: 6px;
   width: 3px;
-  background: #4A7A5C;
+  background: #6FCF97;
   border-radius: 0 3px 3px 0;
 }
 
@@ -121,7 +121,7 @@
 .admin-logout-btn {
   background: none;
   border: none;
-  color: #6B9E7A;
+  color: #6FCF97;
   font-family: 'Nunito', sans-serif;
   font-size: 13px;
   font-weight: 700;
@@ -202,8 +202,8 @@
    HERO CARD
    ============================================================ */
 .admin-hero-card {
-  background: linear-gradient(135deg, #1A2E1C 0%, #263D29 60%, #2E5A3F 100%);
-  border-radius: 14px;
+  background: #1C1A27;
+  border-radius: 16px;
   padding: 28px 32px;
   margin-bottom: 20px;
   color: #ffffff;
@@ -214,18 +214,31 @@
 .admin-hero-card::before {
   content: '';
   position: absolute;
-  top: -50px;
-  right: -50px;
-  width: 220px;
-  height: 220px;
-  background: rgba(74, 122, 92, 0.15);
+  top: -60px;
+  right: -60px;
+  width: 240px;
+  height: 240px;
+  border: 40px solid rgba(111, 207, 151, 0.10);
   border-radius: 50%;
+  pointer-events: none;
+}
+
+.admin-hero-card::after {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 140px;
+  height: 140px;
+  border: 28px solid rgba(111, 207, 151, 0.07);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 .admin-hero-label {
   font-size: 10px;
   font-weight: 800;
-  color: #4A7A5C;
+  color: #6FCF97;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   margin-bottom: 10px;
@@ -264,7 +277,7 @@
 .admin-hero-stats span {
   font-size: 10px;
   font-weight: 700;
-  color: #6B9E7A;
+  color: #6FCF97;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -287,7 +300,7 @@
   flex-direction: column;
   gap: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  border: 1px solid #E5E7EB;
+  border: 1px solid #E5E2DA;
   transition: box-shadow 0.15s, transform 0.15s;
 }
 
@@ -367,7 +380,7 @@
   gap: 14px;
   cursor: pointer;
   transition: box-shadow 0.15s, transform 0.15s;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #E5E2DA;
 }
 
 .admin-priority-row:hover {
@@ -422,7 +435,7 @@
 
 .admin-module-btn {
   background: #ffffff;
-  border: 1.5px solid #E5E7EB;
+  border: 1.5px solid #E5E2DA;
   border-radius: 10px;
   padding: 16px 12px;
   display: flex;
@@ -441,7 +454,7 @@
 
 .admin-module-btn:hover {
   border-color: #4A7A5C;
-  background: #F0F5F2;
+  background: #EBF2EE;
   color: #1A2E1C;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(74, 122, 92, 0.12);
@@ -477,7 +490,7 @@
 .admin-filter-btn {
   padding: 7px 16px;
   background: #ffffff;
-  border: 1.5px solid #E5E7EB;
+  border: 1.5px solid #E5E2DA;
   border-radius: 20px;
   font-family: 'Nunito', sans-serif;
   font-size: 12px;
@@ -522,7 +535,7 @@
   align-items: center;
   gap: 10px;
   background: #ffffff;
-  border: 1.5px solid #E5E7EB;
+  border: 1.5px solid #E5E2DA;
   border-radius: 10px;
   padding: 10px 16px;
   margin-bottom: 16px;
@@ -574,7 +587,7 @@
   background: #ffffff;
   border-radius: 10px;
   padding: 12px 16px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #E5E2DA;
   transition: box-shadow 0.15s;
 }
 
@@ -683,7 +696,7 @@
   background: #ffffff;
   border-radius: 10px;
   padding: 14px 18px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #E5E2DA;
   cursor: pointer;
   transition: box-shadow 0.15s, transform 0.15s;
 }
@@ -741,7 +754,7 @@
   background: #ffffff;
   border-radius: 10px;
   padding: 18px 22px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #E5E2DA;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   overflow-x: auto;
 }
@@ -783,7 +796,7 @@
 .admin-flux-line {
   flex: 1;
   height: 2px;
-  background: #E5E7EB;
+  background: #E5E2DA;
   margin: 0 14px 8px;
 }
 
@@ -815,11 +828,13 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  background: linear-gradient(135deg, #1A2E1C, #2E5A3F);
+  background: #1C1A27;
   color: #ffffff;
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 22px 24px;
   margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
 }
 
 .admin-pro-detail-avatar {
@@ -844,7 +859,7 @@
 
 .admin-pro-detail-head span {
   font-size: 12px;
-  color: #6B9E7A;
+  color: #6FCF97;
 }
 
 .admin-pro-detail-stats {
@@ -869,7 +884,7 @@
 
 .admin-pro-detail-stats span {
   font-size: 10px;
-  color: #6B9E7A;
+  color: #6FCF97;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -888,7 +903,7 @@
   background: #ffffff;
   border-radius: 10px;
   padding: 16px 20px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #E5E2DA;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: box-shadow 0.15s;
 }
@@ -960,7 +975,7 @@
 }
 
 .admin-doc-btn.open {
-  background: #F3F4F6;
+  background: #F0EDE7;
   color: #374151;
 }
 
@@ -1029,7 +1044,7 @@
   background: #ffffff;
   border-radius: 10px;
   padding: 18px 22px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #E5E2DA;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: box-shadow 0.15s;
 }
@@ -1079,7 +1094,7 @@
 
 .admin-service-progress-bar {
   height: 5px;
-  background: #F3F4F6;
+  background: #F0EDE7;
   border-radius: 6px;
   margin-bottom: 10px;
   overflow: hidden;
@@ -1097,7 +1112,7 @@
   font-weight: 700;
   color: #9CA3AF;
   padding: 3px 9px;
-  background: #F3F4F6;
+  background: #F0EDE7;
   border-radius: 5px;
 }
 
@@ -1138,7 +1153,7 @@
   background: #ffffff;
   border-radius: 10px;
   padding: 14px 18px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #E5E2DA;
   transition: box-shadow 0.15s;
 }
 
@@ -1150,7 +1165,7 @@
   width: 38px;
   height: 38px;
   background: #1A2E1C;
-  color: #6B9E7A;
+  color: #6FCF97;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -1204,7 +1219,7 @@
   background: #ffffff;
   border-radius: 10px;
   padding: 16px 20px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #E5E2DA;
   display: flex;
   align-items: center;
   gap: 14px;
