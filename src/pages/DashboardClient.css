@@ -1,42 +1,49 @@
-/* ===== DASHBOARD CLIENT ===== */
+/* ============================================================
+   DASHBOARD CLIENT — Design System Vert
+   Primary: #4A7A5C | Dark: #2E5A3F | Light: #EDF4F0 | BG: #F5F7FA
+   ============================================================ */
+
+/* ── Base ── */
 .dashboard-client-layout {
   min-height: 100vh;
   background: #F5F7FA;
-  font-family: 'Nunito', -apple-system, sans-serif;
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #111827;
 }
 
-/* ===== NAVBAR CLIENT ===== */
+/* ============================================================
+   NAVBAR
+   ============================================================ */
 .client-navbar {
   background: #ffffff;
-  border-bottom: 1px solid #EEEEEE;
+  border-bottom: 1px solid #E5E7EB;
   position: sticky;
   top: 0;
-  z-index: 100;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+  z-index: 200;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .client-navbar-inner {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 24px;
-  height: 64px;
+  padding: 0 28px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 20px;
 }
 
 .client-logo {
-  font-family: 'Nunito', sans-serif;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 900;
-  color: #000000;
-  letter-spacing: -0.02em;
+  color: #111827;
+  letter-spacing: -0.03em;
   text-transform: uppercase;
   flex-shrink: 0;
 }
 
-/* NAV CENTRE */
+/* Nav centre */
 .client-nav {
   display: flex;
   align-items: center;
@@ -46,42 +53,62 @@
 }
 
 .client-nav-item {
-  display: flex;
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 7px 12px;
+  gap: 6px;
+  padding: 6px 14px;
   font-family: 'Nunito', sans-serif;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 700;
-  color: #555555;
+  color: #6B7280;
   background: none;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: color 0.15s, background 0.15s;
   white-space: nowrap;
+  text-decoration: none;
+}
+
+.client-nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 14px;
+  right: 14px;
+  height: 2px;
+  background: #4A7A5C;
+  border-radius: 2px 2px 0 0;
+  opacity: 0;
+  transition: opacity 0.15s;
 }
 
 .client-nav-item:hover {
-  background: #F5F5F5;
-  color: #000000;
+  background: #F5F7FA;
+  color: #111827;
 }
 
 .client-nav-item.active {
-  background: #F0F5F2;
   color: #4A7A5C;
+  background: none;
+}
+
+.client-nav-item.active::after {
+  opacity: 1;
 }
 
 .client-nav-badge {
   background: #4A7A5C;
-  color: white;
-  font-size: 11px;
+  color: #ffffff;
+  font-size: 10px;
   font-weight: 800;
-  padding: 2px 7px;
+  padding: 2px 6px;
   border-radius: 10px;
+  line-height: 1.4;
 }
 
-/* DROITE NAVBAR */
+/* Droite navbar */
 .client-navbar-right {
   display: flex;
   align-items: center;
@@ -90,52 +117,62 @@
 }
 
 .btn-nouvelle-demande {
-  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
   background: #4A7A5C;
-  color: white;
+  color: #ffffff;
+  border: none;
   border-radius: 8px;
   font-family: 'Nunito', sans-serif;
   font-size: 13px;
   font-weight: 700;
+  cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s;
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(74, 122, 92, 0.30);
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
 }
 
 .btn-nouvelle-demande:hover {
   background: #2E5A3F;
+  box-shadow: 0 4px 12px rgba(74, 122, 92, 0.35);
+  transform: translateY(-1px);
 }
 
 .client-avatar-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 8px;
-  transition: background 0.2s;
+  transition: background 0.15s;
   font-family: 'Nunito', sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  color: #333;
+  color: #374151;
 }
 
 .client-avatar-btn:hover {
-  background: #F5F5F5;
+  background: #F5F7FA;
 }
 
 .client-avatar {
-  width: 36px;
-  height: 36px;
-  background: #4A7A5C;
-  color: white;
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, #4A7A5C, #2E5A3F);
+  color: #ffffff;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
+  flex-shrink: 0;
 }
 
 .mobile-burger {
@@ -144,11 +181,14 @@
   cursor: pointer;
   background: none;
   border: none;
-  color: #333;
+  color: #374151;
   padding: 4px;
+  border-radius: 6px;
 }
 
-/* ===== MAIN ===== */
+/* ============================================================
+   MAIN LAYOUT
+   ============================================================ */
 .client-main {
   padding: 40px 0 80px;
 }
@@ -156,54 +196,97 @@
 .client-page {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 28px;
 }
 
-/* BIENVENUE */
+/* ============================================================
+   WELCOME BANNER
+   ============================================================ */
 .welcome-banner {
-  background: linear-gradient(135deg, #2E5A3F 0%, #4A7A5C 100%);
-  border-radius: 16px;
+  background: linear-gradient(135deg, #1E4A30 0%, #2E5A3F 45%, #4A7A5C 100%);
+  border-radius: 14px;
   padding: 32px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 24px;
-  color: white;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-banner::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+}
+
+.welcome-banner::after {
+  content: '';
+  position: absolute;
+  bottom: -60px;
+  right: 80px;
+  width: 160px;
+  height: 160px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 50%;
+}
+
+.welcome-text {
+  position: relative;
+  z-index: 1;
 }
 
 .welcome-text h1 {
   font-family: 'Nunito', sans-serif;
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 900;
-  color: white;
+  color: #ffffff;
   margin-bottom: 6px;
+  letter-spacing: -0.02em;
 }
 
 .welcome-text p {
-  font-size: 15px;
-  color: rgba(255,255,255,0.85);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.80);
+  font-weight: 600;
 }
 
 .btn-primary-green {
-  display: inline-block;
-  padding: 14px 24px;
-  background: white;
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 24px;
+  background: #ffffff;
   color: #2E5A3F;
+  border: none;
   border-radius: 10px;
   font-family: 'Nunito', sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   white-space: nowrap;
-  transition: all 0.2s;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s, box-shadow 0.15s;
   flex-shrink: 0;
 }
 
 .btn-primary-green:hover {
-  background: #F0F5F2;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.20);
 }
 
-/* STATS */
+/* ============================================================
+   STAT CARDS
+   ============================================================ */
 .client-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -211,42 +294,68 @@
 }
 
 .client-stat {
-  background: white;
-  border-radius: 12px;
+  background: #ffffff;
+  border-radius: 10px;
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1px solid #E5E7EB;
+  transition: box-shadow 0.15s, transform 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+
+.client-stat::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: #4A7A5C;
+  border-radius: 0 2px 2px 0;
+}
+
+.client-stat:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
 }
 
 .client-stat-num {
   font-family: 'Nunito', sans-serif;
-  font-size: 36px;
+  font-size: 34px;
   font-weight: 900;
-  color: #4A7A5C;
+  color: #111827;
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 .client-stat-label {
-  font-size: 13px;
-  color: #999;
-  font-weight: 600;
+  font-size: 12px;
+  color: #9CA3AF;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-/* SECTIONS */
+/* ============================================================
+   SECTIONS (cards conteneurs)
+   ============================================================ */
 .client-section {
-  background: white;
-  border-radius: 16px;
-  padding: 28px 32px;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 24px 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1px solid #E5E7EB;
 }
 
 .client-section h2 {
   font-family: 'Nunito', sans-serif;
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 800;
-  color: #000;
+  color: #111827;
   margin-bottom: 20px;
 }
 
@@ -254,63 +363,74 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .section-head h1,
 .section-head h2 {
   font-family: 'Nunito', sans-serif;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 900;
-  color: #000;
+  color: #111827;
   margin: 0;
 }
 
 .btn-voir-tout {
   font-family: 'Nunito', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #4A7A5C;
   background: none;
   border: none;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: opacity 0.15s;
+  text-decoration: none;
 }
 
-.btn-voir-tout:hover { opacity: 0.7; }
+.btn-voir-tout:hover {
+  opacity: 0.70;
+}
 
-/* DEMANDES */
+/* ============================================================
+   DEMANDES
+   ============================================================ */
 .demandes-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .demande-card {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 20px;
+  padding: 16px 20px;
   background: #FAFAFA;
-  border-radius: 12px;
-  border: 1.5px solid #EEEEEE;
-  transition: all 0.2s;
+  border-radius: 10px;
+  border-left: 3px solid #4A7A5C;
+  border-top: 1px solid #E5E7EB;
+  border-right: 1px solid #E5E7EB;
+  border-bottom: 1px solid #E5E7EB;
+  transition: box-shadow 0.15s, transform 0.15s;
+  cursor: pointer;
+  text-decoration: none;
 }
 
 .demande-card:hover {
-  border-color: #4A7A5C;
-  box-shadow: 0 2px 12px rgba(74,122,92,0.1);
+  box-shadow: 0 4px 16px rgba(74, 122, 92, 0.10);
+  transform: translateY(-1px);
+  background: #ffffff;
 }
 
 .demande-icon {
-  font-size: 36px;
-  width: 52px;
-  height: 52px;
-  background: #F0F5F2;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  background: #EDF4F0;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 22px;
   flex-shrink: 0;
 }
 
@@ -318,19 +438,23 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+  min-width: 0;
 }
 
 .demande-info strong {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
-  color: #000;
+  color: #111827;
   font-family: 'Nunito', sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .demande-info span {
-  font-size: 13px;
-  color: #888;
+  font-size: 12px;
+  color: #9CA3AF;
   font-weight: 600;
 }
 
@@ -339,37 +463,43 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .statut-pill {
   padding: 4px 12px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   font-family: 'Nunito', sans-serif;
   white-space: nowrap;
 }
 
 .devis-count {
-  font-size: 13px;
+  font-size: 12px;
   color: #4A7A5C;
   font-weight: 700;
 }
 
 .btn-voir-devis {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: #4A7A5C;
   background: none;
   border: none;
   cursor: pointer;
   font-family: 'Nunito', sans-serif;
-  transition: opacity 0.2s;
+  transition: opacity 0.15s;
+  text-decoration: none;
 }
 
-.btn-voir-devis:hover { opacity: 0.7; }
+.btn-voir-devis:hover {
+  opacity: 0.70;
+}
 
-/* SERVICES RAPIDES */
+/* ============================================================
+   SERVICES RAPIDES
+   ============================================================ */
 .services-quick-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -381,65 +511,74 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 20px 16px;
+  padding: 20px 12px;
   background: #FAFAFA;
-  border: 2px solid #EEEEEE;
-  border-radius: 12px;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 10px;
   font-family: 'Nunito', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  color: #333;
-  transition: all 0.2s;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  text-decoration: none;
 }
 
 .quick-service-btn:hover {
   border-color: #4A7A5C;
-  background: #F0F5F2;
+  background: #EDF4F0;
   color: #4A7A5C;
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 122, 92, 0.12);
 }
 
 .quick-service-btn span:first-child {
-  font-size: 28px;
+  font-size: 26px;
 }
 
-/* PAGE TITLES */
+/* ============================================================
+   PAGE TITLES
+   ============================================================ */
 .client-page > h1 {
   font-family: 'Nunito', sans-serif;
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 900;
-  color: #000;
-  margin-bottom: 0;
+  color: #111827;
+  letter-spacing: -0.02em;
 }
 
 .page-subtitle {
-  font-size: 15px;
-  color: #888;
-  margin-top: -24px;
+  font-size: 14px;
+  color: #9CA3AF;
   font-weight: 600;
+  margin-top: -20px;
 }
 
-/* DEVIS */
+/* ============================================================
+   DEVIS
+   ============================================================ */
 .devis-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .devis-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 20px 24px;
   display: flex;
   align-items: center;
-  gap: 24px;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
-  border: 2px solid #EEEEEE;
-  transition: border-color 0.2s;
+  gap: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1.5px solid #E5E7EB;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .devis-card:hover {
   border-color: #4A7A5C;
+  box-shadow: 0 4px 16px rgba(74, 122, 92, 0.10);
 }
 
 .devis-artisan {
@@ -447,68 +586,78 @@
   align-items: center;
   gap: 14px;
   flex: 1;
+  min-width: 0;
 }
 
 .artisan-avatar {
-  width: 52px;
-  height: 52px;
-  background: #4A7A5C;
-  color: white;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #4A7A5C, #2E5A3F);
+  color: #ffffff;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   flex-shrink: 0;
 }
 
+.artisan-info {
+  min-width: 0;
+}
+
 .artisan-info strong {
   display: block;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
-  color: #000;
+  color: #111827;
   font-family: 'Nunito', sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .artisan-info span {
-  font-size: 13px;
-  color: #888;
+  font-size: 12px;
+  color: #9CA3AF;
   font-weight: 600;
 }
 
 .artisan-note {
-  font-size: 13px;
-  color: #FFB800;
+  font-size: 12px;
+  color: #F59E0B;
   font-weight: 700;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .devis-details {
   display: flex;
-  gap: 32px;
+  gap: 28px;
 }
 
 .devis-montant,
 .devis-delai {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   text-align: center;
 }
 
 .devis-montant span,
 .devis-delai span {
-  font-size: 12px;
-  color: #999;
-  font-weight: 600;
+  font-size: 11px;
+  color: #9CA3AF;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .devis-montant strong,
 .devis-delai strong {
-  font-size: 18px;
-  font-weight: 800;
-  color: #000;
+  font-size: 17px;
+  font-weight: 900;
+  color: #111827;
   font-family: 'Nunito', sans-serif;
 }
 
@@ -519,73 +668,79 @@
 }
 
 .btn-accepter {
-  padding: 12px 20px;
+  padding: 10px 18px;
   background: #4A7A5C;
-  color: white;
+  color: #ffffff;
   border: none;
   border-radius: 8px;
   font-family: 'Nunito', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.15s, transform 0.1s;
   white-space: nowrap;
 }
 
-.btn-accepter:hover { background: #2E5A3F; }
+.btn-accepter:hover {
+  background: #2E5A3F;
+  transform: translateY(-1px);
+}
 
 .btn-contacter {
-  padding: 10px 20px;
-  background: white;
+  padding: 9px 18px;
+  background: #ffffff;
   color: #4A7A5C;
-  border: 2px solid #4A7A5C;
+  border: 1.5px solid #4A7A5C;
   border-radius: 8px;
   font-family: 'Nunito', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.15s;
   white-space: nowrap;
 }
 
 .btn-contacter:hover {
-  background: #F0F5F2;
+  background: #EDF4F0;
 }
 
-/* MESSAGES */
+/* ============================================================
+   MESSAGES
+   ============================================================ */
 .messages-list-client {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .message-client-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 20px;
   display: flex;
   align-items: flex-start;
-  gap: 16px;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
-  border: 2px solid #EEEEEE;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1.5px solid #E5E7EB;
   position: relative;
+  transition: border-color 0.15s;
 }
 
 .message-client-card.unread {
   border-color: #4A7A5C;
-  background: #FAFFF9;
+  background: #FAFFFE;
 }
 
 .msg-avatar-client {
-  width: 48px;
-  height: 48px;
-  background: #4A7A5C;
-  color: white;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #4A7A5C, #2E5A3F);
+  color: #ffffff;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 800;
   flex-shrink: 0;
 }
@@ -594,128 +749,142 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
 }
 
 .msg-header-client {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
 }
 
 .msg-header-client strong {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
-  color: #000;
+  color: #111827;
   font-family: 'Nunito', sans-serif;
 }
 
 .msg-header-client span {
-  font-size: 13px;
-  color: #BBB;
+  font-size: 11px;
+  color: #D1D5DB;
+  white-space: nowrap;
 }
 
 .msg-body p {
-  font-size: 15px;
-  color: #444;
-  line-height: 1.5;
+  font-size: 14px;
+  color: #6B7280;
+  line-height: 1.55;
 }
 
 .msg-reply-box {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .msg-reply-box input {
   flex: 1;
-  padding: 10px 16px;
-  border: 2px solid #EEEEEE;
+  padding: 9px 14px;
+  border: 1.5px solid #E5E7EB;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   font-family: 'Nunito', sans-serif;
-  transition: border-color 0.2s;
+  color: #111827;
+  background: #FAFAFA;
+  transition: border-color 0.15s, background 0.15s;
+  outline: none;
 }
 
 .msg-reply-box input:focus {
-  outline: none;
   border-color: #4A7A5C;
+  background: #ffffff;
 }
 
 .btn-send {
-  padding: 10px 20px;
+  padding: 9px 18px;
   background: #4A7A5C;
-  color: white;
+  color: #ffffff;
   border: none;
   border-radius: 8px;
   font-family: 'Nunito', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.15s;
+  white-space: nowrap;
 }
 
-.btn-send:hover { background: #2E5A3F; }
+.btn-send:hover {
+  background: #2E5A3F;
+}
 
 .unread-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   background: #4A7A5C;
   border-radius: 50%;
   flex-shrink: 0;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
-/* PROFIL */
+/* ============================================================
+   PROFIL
+   ============================================================ */
 .profil-client-card {
-  background: white;
-  border-radius: 16px;
-  padding: 40px;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
-  max-width: 680px;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 36px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1px solid #E5E7EB;
+  max-width: 720px;
 }
 
 .profil-client-header {
   display: flex;
   align-items: center;
-  gap: 24px;
-  margin-bottom: 40px;
-  padding-bottom: 32px;
-  border-bottom: 2px solid #F0F0F0;
+  gap: 20px;
+  margin-bottom: 32px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid #E5E7EB;
 }
 
 .profil-avatar-xl {
-  width: 80px;
-  height: 80px;
-  background: #4A7A5C;
-  color: white;
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #4A7A5C, #2E5A3F);
+  color: #ffffff;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 900;
   flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(74, 122, 92, 0.25);
 }
 
 .profil-client-header h2 {
   font-family: 'Nunito', sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 900;
+  color: #111827;
   margin-bottom: 4px;
 }
 
 .profil-client-header p {
-  font-size: 14px;
-  color: #888;
+  font-size: 13px;
+  color: #9CA3AF;
   font-weight: 600;
 }
 
 .profil-client-form h3 {
   font-family: 'Nunito', sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
-  color: #000;
-  margin-bottom: 20px;
+  color: #111827;
+  margin-bottom: 16px;
 }
 
 .form-row-2 {
@@ -730,44 +899,50 @@
 
 .form-group label {
   display: block;
-  font-size: 13px;
-  font-weight: 700;
-  color: #555;
+  font-size: 11px;
+  font-weight: 800;
+  color: #6B7280;
   margin-bottom: 6px;
   font-family: 'Nunito', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .form-group input {
   width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #EEEEEE;
+  padding: 10px 14px;
+  border: 1.5px solid #E5E7EB;
   border-radius: 8px;
   font-size: 14px;
-  color: #000;
+  color: #111827;
   font-family: 'Nunito', sans-serif;
-  transition: border-color 0.2s;
+  background: #FAFAFA;
+  transition: border-color 0.15s, background 0.15s;
+  outline: none;
 }
 
 .form-group input:focus {
-  outline: none;
   border-color: #4A7A5C;
+  background: #ffffff;
 }
 
 .btn-save-client {
-  padding: 14px 28px;
+  padding: 12px 24px;
   background: #4A7A5C;
-  color: white;
+  color: #ffffff;
   border: none;
   border-radius: 8px;
   font-family: 'Nunito', sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 8px;
+  transition: background 0.15s, transform 0.1s;
 }
 
-.btn-save-client:hover { background: #2E5A3F; }
+.btn-save-client:hover {
+  background: #2E5A3F;
+  transform: translateY(-1px);
+}
 
 .profil-save-row {
   display: flex;
@@ -777,66 +952,688 @@
   flex-wrap: wrap;
 }
 
-.profil-danger-zone {
-  margin-top: 32px;
-  padding-top: 32px;
-  border-top: 2px solid #F0F0F0;
-}
-
-.profil-danger-zone h3 {
-  font-family: 'Nunito', sans-serif;
-  font-size: 16px;
-  font-weight: 800;
-  color: #DC2626;
-  margin-bottom: 12px;
-}
-
 .btn-deconnexion {
-  display: inline-block;
-  padding: 12px 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 20px;
   background: #FEF2F2;
   color: #DC2626;
-  border: 2px solid #FCA5A5;
+  border: 1.5px solid #FECACA;
   border-radius: 8px;
   font-family: 'Nunito', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  transition: all 0.2s;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-decoration: none;
 }
 
 .btn-deconnexion:hover {
   background: #FEE2E2;
 }
 
-/* RESPONSIVE */
+/* ============================================================
+   CHANTIERS
+   ============================================================ */
+.chantier-card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1px solid #E5E7EB;
+  transition: box-shadow 0.15s;
+}
+
+.chantier-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.chantier-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.chantier-card-header h3 {
+  font-family: 'Nunito', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.chantier-artisan {
+  font-size: 12px;
+  color: #9CA3AF;
+  font-weight: 600;
+}
+
+.rdv-label {
+  font-size: 10px;
+  color: #9CA3AF;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.chantier-progress-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.chantier-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: #F3F4F6;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.chantier-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4A7A5C, #2E5A3F);
+  border-radius: 6px;
+  transition: width 0.5s ease;
+}
+
+.chantier-etape {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #D1D5DB;
+  font-weight: 600;
+  padding: 3px 0;
+}
+
+.chantier-etape.fait {
+  color: #4A7A5C;
+}
+
+.chantier-etape.encours {
+  color: #111827;
+  font-weight: 800;
+}
+
+.chantier-progress-pct {
+  font-size: 13px;
+  font-weight: 800;
+  color: #4A7A5C;
+  white-space: nowrap;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ============================================================
+   DOCUMENTS
+   ============================================================ */
+.documents-sign-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  background: linear-gradient(135deg, #2E5A3F, #4A7A5C);
+  border-radius: 10px;
+  color: #ffffff;
+  margin-bottom: 20px;
+}
+
+.documents-sign-banner span {
+  font-size: 24px;
+}
+
+.documents-sign-banner strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.documents-sign-banner p {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.documents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.documents-group {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1px solid #E5E7EB;
+}
+
+.documents-group h3 {
+  font-size: 10px;
+  font-weight: 800;
+  color: #4A7A5C;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.document-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #F9FAFB;
+}
+
+.document-row:last-child {
+  border-bottom: none;
+}
+
+.doc-type-icon {
+  background: #FEF2F2;
+  color: #DC2626;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
+}
+
+.doc-info-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.doc-info-main strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 2px;
+}
+
+.doc-info-main span {
+  font-size: 11px;
+  color: #9CA3AF;
+}
+
+.doc-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.doc-signed {
+  font-size: 12px;
+  color: #4A7A5C;
+  font-weight: 700;
+}
+
+.doc-sign-btn {
+  padding: 6px 14px;
+  background: #E87D50;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.doc-sign-btn:hover {
+  background: #C4562C;
+}
+
+.doc-download {
+  width: 32px;
+  height: 32px;
+  background: #F3F4F6;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.doc-download:hover {
+  background: #E5E7EB;
+}
+
+/* ============================================================
+   AGENDA
+   ============================================================ */
+.agenda-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.agenda-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.agenda-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.agenda-date-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 72px;
+  gap: 1px;
+  text-align: center;
+}
+
+.agenda-date {
+  font-size: 11px;
+  color: #9CA3AF;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.agenda-heure {
+  font-size: 20px;
+  color: #4A7A5C;
+  font-weight: 900;
+  font-family: 'Nunito', sans-serif;
+}
+
+.agenda-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.agenda-info strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 3px;
+}
+
+.agenda-info span {
+  font-size: 12px;
+  color: #9CA3AF;
+}
+
+.agenda-statut {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   CHAT
+   ============================================================ */
+.chat-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  height: calc(100vh - 120px);
+  min-height: 500px;
+  background: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 1px solid #E5E7EB;
+}
+
+.chat-sidebar {
+  border-right: 1px solid #E5E7EB;
+  overflow-y: auto;
+  background: #FAFAFA;
+}
+
+.chat-conv-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #F3F4F6;
+  cursor: pointer;
+  text-align: left;
+  font-family: 'Nunito', sans-serif;
+  transition: background 0.15s;
+}
+
+.chat-conv-item:hover {
+  background: #EDF4F0;
+}
+
+.chat-conv-item.active {
+  background: #E5EEE9;
+}
+
+.chat-conv-avatar {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, #4A7A5C, #2E5A3F);
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.chat-conv-avatar.pro {
+  background: linear-gradient(135deg, #E87D50, #C4562C);
+}
+
+.chat-conv-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-conv-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 2px;
+}
+
+.chat-conv-name strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.chat-unread-dot {
+  width: 7px;
+  height: 7px;
+  background: #4A7A5C;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chat-conv-preview {
+  font-size: 11px;
+  color: #9CA3AF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  max-width: 170px;
+}
+
+.chat-window {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #D1D5DB;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 8px;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #E5E7EB;
+  background: #ffffff;
+}
+
+.chat-header strong {
+  font-size: 14px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #F8FAF9;
+}
+
+.chat-bubble-wrap {
+  display: flex;
+}
+
+.chat-bubble-wrap.moi {
+  justify-content: flex-end;
+}
+
+.chat-bubble-wrap.eux {
+  justify-content: flex-start;
+}
+
+.chat-bubble {
+  max-width: 65%;
+  padding: 10px 14px;
+  border-radius: 14px;
+}
+
+.chat-bubble-wrap.moi .chat-bubble {
+  background: #4A7A5C;
+  border-bottom-right-radius: 3px;
+}
+
+.chat-bubble-wrap.eux .chat-bubble {
+  background: #ffffff;
+  border-bottom-left-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.chat-bubble p {
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin-bottom: 3px;
+}
+
+.chat-bubble-wrap.moi .chat-bubble p {
+  color: #ffffff;
+}
+
+.chat-bubble-wrap.eux .chat-bubble p {
+  color: #111827;
+}
+
+.chat-time {
+  font-size: 10px;
+  opacity: 0.60;
+  display: block;
+  text-align: right;
+}
+
+.chat-input-bar {
+  display: flex;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid #E5E7EB;
+  background: #ffffff;
+}
+
+.chat-input-bar input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 24px;
+  font-size: 13px;
+  font-family: 'Nunito', sans-serif;
+  outline: none;
+  transition: border-color 0.15s;
+  background: #FAFAFA;
+  color: #111827;
+}
+
+.chat-input-bar input:focus {
+  border-color: #4A7A5C;
+  background: #ffffff;
+}
+
+.chat-send-btn {
+  padding: 10px 20px;
+  background: #4A7A5C;
+  color: #ffffff;
+  border: none;
+  border-radius: 24px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.chat-send-btn:hover {
+  background: #2E5A3F;
+}
+
+/* ============================================================
+   DOCUMENTS PAGE (doc-icon, doc-info, doc-meta etc.)
+   ============================================================ */
+.doc-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.doc-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.doc-info strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 2px;
+}
+
+.doc-info span {
+  font-size: 11px;
+  color: #9CA3AF;
+}
+
+.doc-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.doc-taille {
+  font-size: 11px;
+  color: #D1D5DB;
+  font-weight: 600;
+}
+
+.doc-signe-badge {
+  background: #ECFDF5;
+  color: #10B981;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.03em;
+}
+
+.btn-dl-doc {
+  padding: 6px 12px;
+  background: #F3F4F6;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+  text-decoration: none;
+}
+
+.btn-dl-doc:hover {
+  background: #E5E7EB;
+}
+
+/* ============================================================
+   RESPONSIVE — 1024px
+   ============================================================ */
 @media (max-width: 1024px) {
   .client-stats {
     grid-template-columns: repeat(2, 1fr);
   }
+
   .services-quick-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
+/* ============================================================
+   RESPONSIVE — 768px
+   ============================================================ */
 @media (max-width: 768px) {
+  .client-navbar-inner {
+    padding: 0 16px;
+  }
+
   .client-nav {
     display: none;
     position: fixed;
-    top: 68px;
+    top: 60px;
     left: 0;
     right: 0;
-    background: white;
+    background: #ffffff;
     flex-direction: column;
-    padding: 16px;
-    border-bottom: 1px solid #EEE;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-    z-index: 99;
     align-items: flex-start;
-    gap: 4px;
+    padding: 12px;
+    border-bottom: 1px solid #E5E7EB;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+    z-index: 199;
+    gap: 2px;
   }
 
   .client-nav.open {
     display: flex;
+  }
+
+  .client-nav-item::after {
+    display: none;
   }
 
   .mobile-burger {
@@ -852,13 +1649,18 @@
   }
 
   .services-quick-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .welcome-banner {
     flex-direction: column;
     align-items: flex-start;
-    padding: 24px;
+    padding: 24px 20px;
+  }
+
+  .btn-primary-green {
+    width: 100%;
+    justify-content: center;
   }
 
   .devis-card {
@@ -876,12 +1678,15 @@
     flex-direction: row;
   }
 
-  .btn-accepter, .btn-contacter {
+  .btn-accepter,
+  .btn-contacter {
     flex: 1;
+    justify-content: center;
   }
 
   .profil-client-card {
-    padding: 24px 20px;
+    padding: 20px 16px;
+    max-width: 100%;
   }
 
   .form-row-2 {
@@ -891,842 +1696,63 @@
   .profil-client-header {
     flex-direction: column;
     text-align: center;
+    gap: 12px;
   }
-}
 
-/* ===== CHANTIERS DÉTAILLÉS ===== */
-.chantiers-detail-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.chantier-detail-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 28px;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
-  border: 1.5px solid #EBEBEB;
-}
-
-.chantier-detail-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
-}
-
-.chantier-service-tag {
-  display: inline-block;
-  background: #F0F5F2;
-  color: #4A7A5C;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 3px 10px;
-  border-radius: 4px;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
-}
-
-.chantier-detail-header h3 {
-  font-size: 18px;
-  font-weight: 800;
-  color: #000;
-  margin-bottom: 6px;
-}
-
-.chantier-detail-header p {
-  font-size: 13px;
-  color: #888;
-  font-weight: 600;
-}
-
-.chantier-avancement-circle {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: conic-gradient(#4A7A5C var(--pct, 65%), #F0F0F0 0);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.chantier-avancement-circle span {
-  font-size: 14px;
-  font-weight: 800;
-  color: #4A7A5C;
-  background: #fff;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.chantier-progress-bar {
-  height: 6px;
-  background: #F0F0F0;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  overflow: hidden;
-}
-
-.chantier-progress-fill {
-  height: 100%;
-  background: #4A7A5C;
-  border-radius: 4px;
-  transition: width 0.5s ease;
-}
-
-.chantier-etapes {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.etape-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: #999;
-  font-weight: 600;
-}
-
-.etape-item.fait { color: #4A7A5C; }
-.etape-item.encours { color: #000; font-weight: 700; }
-
-.etape-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #EBEBEB;
-  flex-shrink: 0;
-}
-
-.etape-item.fait .etape-dot { background: #4A7A5C; }
-.etape-item.encours .etape-dot { background: #E87D50; }
-
-.etape-check { color: #4A7A5C; font-size: 12px; }
-
-.etape-encours-tag {
-  background: #FFF0EB;
-  color: #E87D50;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.chantier-rdv {
-  padding-top: 16px;
-  border-top: 1px solid #F0F0F0;
-  font-size: 14px;
-  color: #666;
-}
-
-.chantier-rdv strong { color: #000; }
-
-/* ===== DOCUMENTS ===== */
-.documents-sign-banner {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px 24px;
-  background: #4A7A5C;
-  border-radius: 12px;
-  color: #fff;
-  margin-bottom: 24px;
-}
-
-.documents-sign-banner span { font-size: 28px; }
-
-.documents-sign-banner strong {
-  display: block;
-  font-size: 15px;
-  font-weight: 800;
-  margin-bottom: 2px;
-}
-
-.documents-sign-banner p {
-  font-size: 13px;
-  opacity: 0.85;
-}
-
-.btn-sign-all {
-  margin-left: auto;
-  padding: 10px 20px;
-  background: #fff;
-  color: #4A7A5C;
-  border: none;
-  border-radius: 8px;
-  font-family: 'Nunito', sans-serif;
-  font-size: 14px;
-  font-weight: 800;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.documents-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.documents-group {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px 24px;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
-}
-
-.documents-group h3 {
-  font-size: 11px;
-  font-weight: 800;
-  color: #4A7A5C;
-  letter-spacing: 0.08em;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #F0F0F0;
-}
-
-.document-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 0;
-  border-bottom: 1px solid #F5F5F5;
-}
-
-.document-row:last-child { border-bottom: none; }
-
-.doc-type-icon {
-  background: #FEF2F2;
-  color: #DC2626;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 4px 8px;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-
-.doc-info-main {
-  flex: 1;
-}
-
-.doc-info-main strong {
-  display: block;
-  font-size: 14px;
-  font-weight: 700;
-  color: #000;
-  margin-bottom: 3px;
-}
-
-.doc-info-main span {
-  font-size: 12px;
-  color: #999;
-}
-
-.doc-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.doc-signed {
-  font-size: 13px;
-  color: #4A7A5C;
-  font-weight: 700;
-}
-
-.doc-sign-btn {
-  padding: 7px 16px;
-  background: #E87D50;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-family: 'Nunito', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.doc-download {
-  width: 34px;
-  height: 34px;
-  background: #F5F5F5;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* ===== AGENDA ===== */
-.agenda-banner {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px 24px;
-  background: #4A7A5C;
-  color: #fff;
-  border-radius: 12px;
-  margin-bottom: 24px;
-}
-
-.agenda-banner span { font-size: 28px; }
-
-.agenda-banner strong {
-  display: block;
-  font-size: 15px;
-  font-weight: 800;
-  margin-bottom: 4px;
-}
-
-.agenda-banner p {
-  font-size: 13px;
-  opacity: 0.85;
-}
-
-.agenda-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.rdv-card {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 20px 24px;
-  background: #fff;
-  border-radius: 12px;
-  border: 1.5px solid #EBEBEB;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-}
-
-.rdv-card.confirme { border-color: #4A7A5C; }
-.rdv-card.a_confirmer { border-color: #E87D50; }
-
-.rdv-date-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 80px;
-  gap: 4px;
-}
-
-.rdv-date-col strong {
-  font-size: 13px;
-  color: #000;
-  font-weight: 800;
-}
-
-.rdv-date-col span {
-  font-size: 20px;
-  color: #4A7A5C;
-  font-weight: 900;
-}
-
-.rdv-info {
-  flex: 1;
-}
-
-.rdv-info strong {
-  display: block;
-  font-size: 15px;
-  font-weight: 800;
-  color: #000;
-  margin-bottom: 4px;
-}
-
-.rdv-info span {
-  font-size: 13px;
-  color: #888;
-}
-
-.rdv-tag.confirme {
-  background: #F0FDF4;
-  color: #4A7A5C;
-  font-size: 13px;
-  font-weight: 700;
-  padding: 6px 14px;
-  border-radius: 20px;
-}
-
-.rdv-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.rdv-btn {
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-family: 'Nunito', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  border: none;
-}
-
-.rdv-btn.confirmer {
-  background: #4A7A5C;
-  color: #fff;
-}
-
-.rdv-btn.reporter {
-  background: #F5F5F5;
-  color: #555;
-}
-
-/* ===== CHAT ===== */
-.chat-layout {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  height: calc(100vh - 160px);
-  background: #fff;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.06);
-  border: 1.5px solid #EBEBEB;
-}
-
-.chat-sidebar {
-  border-right: 1.5px solid #F0F0F0;
-  overflow-y: auto;
-  background: #FAFAFA;
-}
-
-.chat-conv-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 16px 16px;
-  background: none;
-  border: none;
-  border-bottom: 1px solid #F0F0F0;
-  cursor: pointer;
-  text-align: left;
-  font-family: 'Nunito', sans-serif;
-  transition: background 0.15s;
-}
-
-.chat-conv-item:hover { background: #F0F5F2; }
-.chat-conv-item.active { background: #E8F2EC; }
-
-.chat-conv-avatar {
-  width: 40px;
-  height: 40px;
-  background: #4A7A5C;
-  color: #fff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.chat-conv-avatar.pro {
-  background: #E87D50;
-}
-
-.chat-conv-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.chat-conv-name {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 3px;
-}
-
-.chat-conv-name strong {
-  font-size: 14px;
-  font-weight: 700;
-  color: #000;
-}
-
-.chat-unread-dot {
-  width: 8px;
-  height: 8px;
-  background: #4A7A5C;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.chat-conv-preview {
-  font-size: 12px;
-  color: #888;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
-  max-width: 170px;
-}
-
-.chat-window {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.chat-empty {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #BBBBBB;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.chat-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  border-bottom: 1.5px solid #F0F0F0;
-  background: #fff;
-}
-
-.chat-header strong {
-  font-size: 15px;
-  font-weight: 800;
-  color: #000;
-}
-
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  background: #F8FAF9;
-}
-
-.chat-bubble-wrap {
-  display: flex;
-}
-
-.chat-bubble-wrap.moi {
-  justify-content: flex-end;
-}
-
-.chat-bubble-wrap.eux {
-  justify-content: flex-start;
-}
-
-.chat-bubble {
-  max-width: 68%;
-  padding: 12px 16px;
-  border-radius: 16px;
-  background: #EBEBEB;
-}
-
-.chat-bubble-wrap.moi .chat-bubble {
-  background: #4A7A5C;
-  color: #fff;
-  border-bottom-right-radius: 4px;
-}
-
-.chat-bubble-wrap.eux .chat-bubble {
-  background: #fff;
-  border-bottom-left-radius: 4px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
-
-.chat-bubble p {
-  font-size: 14px;
-  line-height: 1.5;
-  margin-bottom: 4px;
-}
-
-.chat-bubble-wrap.moi .chat-bubble p { color: #fff; }
-.chat-bubble-wrap.eux .chat-bubble p { color: #1A1A1A; }
-
-.chat-time {
-  font-size: 11px;
-  opacity: 0.65;
-  display: block;
-  text-align: right;
-}
-
-.chat-input-bar {
-  display: flex;
-  gap: 10px;
-  padding: 16px 20px;
-  border-top: 1.5px solid #F0F0F0;
-  background: #fff;
-}
-
-.chat-input-bar input {
-  flex: 1;
-  padding: 12px 16px;
-  border: 1.5px solid #E5E5E5;
-  border-radius: 24px;
-  font-size: 14px;
-  font-family: 'Nunito', sans-serif;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.chat-input-bar input:focus {
-  border-color: #4A7A5C;
-}
-
-.chat-send-btn {
-  padding: 12px 22px;
-  background: #4A7A5C;
-  color: #fff;
-  border: none;
-  border-radius: 24px;
-  font-family: 'Nunito', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.2s;
-  white-space: nowrap;
-}
-
-.chat-send-btn:hover { background: #2E5A3F; }
-
-.chat-send-btn.pro { background: #E87D50; }
-.chat-send-btn.pro:hover { background: #C84A31; }
-
-@media (max-width: 640px) {
   .chat-layout {
     grid-template-columns: 1fr;
     grid-template-rows: 220px 1fr;
-    height: calc(100vh - 120px);
+    height: calc(100vh - 80px);
   }
-  .chat-sidebar { border-right: none; border-bottom: 1.5px solid #F0F0F0; }
-  .chat-conv-preview { max-width: 200px; }
+
+  .chat-sidebar {
+    border-right: none;
+    border-bottom: 1px solid #E5E7EB;
+  }
+
+  .chat-conv-preview {
+    max-width: 200px;
+  }
+
+  .client-main {
+    padding: 24px 0 60px;
+  }
 }
 
-/* ===== CHANTIERS PAGE ===== */
-.chantiers-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+/* ============================================================
+   RESPONSIVE — 480px
+   ============================================================ */
+@media (max-width: 480px) {
+  .client-stats {
+    grid-template-columns: 1fr;
+  }
 
-.chantier-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 28px;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
-  border: 1.5px solid #EBEBEB;
-}
+  .services-quick-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 
-.chantier-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
-}
+  .welcome-banner {
+    padding: 20px 16px;
+    border-radius: 10px;
+  }
 
-.chantier-card-header h3 {
-  font-size: 18px;
-  font-weight: 800;
-  color: #000;
-  margin-bottom: 6px;
-}
+  .welcome-text h1 {
+    font-size: 20px;
+  }
 
-.chantier-artisan {
-  font-size: 13px;
-  color: #888;
-  font-weight: 600;
-}
+  .client-section {
+    padding: 16px;
+  }
 
-.chantier-card .chantier-rdv {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  text-align: right;
-}
+  .devis-details {
+    gap: 16px;
+  }
 
-.rdv-label {
-  font-size: 11px;
-  color: #999;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
+  .agenda-card {
+    flex-wrap: wrap;
+  }
 
-.chantier-card .chantier-rdv strong {
-  font-size: 13px;
-  color: #4A7A5C;
-  font-weight: 800;
-}
-
-.chantier-progress-bar-wrap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.chantier-progress-bar-wrap .chantier-progress-bar {
-  flex: 1;
-}
-
-.chantier-progress-pct {
-  font-size: 14px;
-  font-weight: 800;
-  color: #4A7A5C;
-  white-space: nowrap;
-}
-
-.chantier-etape {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: #BBBBBB;
-  font-weight: 600;
-  padding: 4px 0;
-}
-
-.chantier-etape.fait { color: #4A7A5C; }
-.chantier-etape.encours { color: #000; font-weight: 800; }
-
-.chantier-etape .etape-dot {
-  font-size: 16px;
-  width: auto;
-  height: auto;
-  background: none;
-  color: #BBBBBB;
-}
-
-.chantier-etape.fait .etape-dot { color: #4A7A5C; }
-.chantier-etape.encours .etape-dot { color: #E87D50; }
-
-/* ===== DOCUMENTS PAGE ===== */
-.doc-icon {
-  font-size: 24px;
-  flex-shrink: 0;
-}
-
-.doc-info {
-  flex: 1;
-}
-
-.doc-info strong {
-  display: block;
-  font-size: 14px;
-  font-weight: 700;
-  color: #000;
-  margin-bottom: 3px;
-}
-
-.doc-info span {
-  font-size: 12px;
-  color: #999;
-}
-
-.doc-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.doc-taille {
-  font-size: 12px;
-  color: #AAAAAA;
-  font-weight: 600;
-}
-
-.doc-signe-badge {
-  background: #ECFDF5;
-  color: #10B981;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 3px 10px;
-  border-radius: 20px;
-}
-
-.btn-dl-doc {
-  padding: 7px 14px;
-  background: #F5F5F5;
-  border: none;
-  border-radius: 8px;
-  font-family: 'Nunito', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  color: #444;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s;
-}
-
-.btn-dl-doc:hover { background: #EBEBEB; }
-
-/* ===== AGENDA PAGE ===== */
-.agenda-card {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 20px 24px;
-  background: #fff;
-  border-radius: 12px;
-  border: 1.5px solid #EBEBEB;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-}
-
-.agenda-date-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 80px;
-  gap: 2px;
-  text-align: center;
-}
-
-.agenda-date {
-  font-size: 12px;
-  color: #888;
-  font-weight: 700;
-}
-
-.agenda-heure {
-  font-size: 22px;
-  color: #4A7A5C;
-  font-weight: 900;
-}
-
-.agenda-info {
-  flex: 1;
-}
-
-.agenda-info strong {
-  display: block;
-  font-size: 15px;
-  font-weight: 800;
-  color: #000;
-  margin-bottom: 4px;
-}
-
-.agenda-info span {
-  font-size: 13px;
-  color: #888;
-}
-
-.agenda-statut {
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
+  .documents-group {
+    padding: 14px 16px;
+  }
 }
