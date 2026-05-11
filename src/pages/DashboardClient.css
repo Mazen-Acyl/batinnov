@@ -921,7 +921,7 @@
 .chantier-card {
   background: #fff;
   border-radius: 16px;
-  padding: 28px;
+  padding: 22px 24px 20px;
   border: 1px solid #E8EDF3;
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
   transition: box-shadow 0.18s;
@@ -929,90 +929,91 @@
 
 .chantier-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
 
-.chantier-card-header {
+.chantier-top-row {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
-.chantier-card-header h3 {
-  font-size: 17px;
-  font-weight: 800;
-  color: #111827;
-  margin-bottom: 6px;
-  letter-spacing: -0.01em;
-}
-
-.chantier-artisan { font-size: 13px; color: #9CA3AF; font-weight: 500; }
-
-.chantier-card .chantier-rdv {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 3px;
-  text-align: right;
-}
-
-.rdv-label {
-  font-size: 10px;
-  font-weight: 800;
+.chantier-ref-label {
+  font-size: 11px;
+  font-weight: 700;
   color: #9CA3AF;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
-.chantier-card .chantier-rdv strong { font-size: 13px; color: #4A7A5C; font-weight: 800; }
-
-.chantier-progress-bar-wrap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+.chantier-statut-badge {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #3B82F6;
+  background: #EFF6FF;
+  padding: 3px 10px;
+  border-radius: 20px;
 }
 
-.chantier-progress-bar {
-  flex: 1;
-  height: 7px;
+.chantier-card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+
+.chantier-card-meta {
+  font-size: 13px;
+  color: #9CA3AF;
+  margin-bottom: 14px;
+}
+
+.chantier-bar-track {
+  height: 5px;
   background: #F3F4F6;
   border-radius: 10px;
   overflow: hidden;
+  margin-bottom: 14px;
 }
 
-.chantier-progress-fill {
+.chantier-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4A7A5C, #40916C);
+  background: #3B82F6;
   border-radius: 10px;
-  transition: width 0.6s ease;
+  transition: width 0.5s ease;
 }
 
-.chantier-progress-pct {
-  font-size: 14px;
-  font-weight: 800;
-  color: #4A7A5C;
-  white-space: nowrap;
-  min-width: 36px;
-  text-align: right;
-}
-
-.chantier-etapes { display: flex; flex-direction: column; gap: 8px; }
-
-.chantier-etape {
+.chantier-steps-row {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13.5px;
-  color: #D1D5DB;
-  font-weight: 600;
-  padding: 3px 0;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
 }
 
-.chantier-etape.fait { color: #4A7A5C; }
-.chantier-etape.encours { color: #111827; font-weight: 800; }
+.chantier-step {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1.5px solid #E5E7EB;
+  color: #9CA3AF;
+  background: #fff;
+  transition: all 0.2s;
+}
 
-.etape-dot { font-size: 14px; width: 20px; text-align: center; flex-shrink: 0; }
-.chantier-etape.fait .etape-dot { color: #4A7A5C; }
-.chantier-etape.encours .etape-dot { color: #E87D50; }
+.chantier-step.done {
+  border-color: #BFDBFE;
+  color: #3B82F6;
+  background: #EFF6FF;
+}
+
+.chantier-card-footer {
+  padding-top: 12px;
+  border-top: 1px solid #F3F4F6;
+  font-size: 13px;
+  color: #9CA3AF;
+}
+
+.chantier-card-footer strong { color: #111827; }
 
 /* ================================================================
    DOCUMENTS

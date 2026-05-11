@@ -745,6 +745,113 @@
 }
 
 /* ============================================================
+   CHANTIERS CARDS (page chantiers)
+   ============================================================ */
+.dp-chantiers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dp-chantier-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 22px 24px 20px;
+  border: 1px solid #EDE8E4;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  transition: box-shadow 0.18s;
+}
+
+.dp-chantier-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.07); }
+
+.dp-chantier-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.dp-chantier-ref {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dp-chantier-titre {
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+
+.dp-chantier-meta {
+  font-size: 13px;
+  color: #9CA3AF;
+  margin-bottom: 14px;
+}
+
+.dp-chantier-bar-track {
+  height: 5px;
+  background: #F3F4F6;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.dp-chantier-bar-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.5s ease;
+}
+
+.dp-chantier-steps-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.dp-chantier-step {
+  padding: 5px 13px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Nunito', sans-serif;
+  border: 1.5px solid #E5E7EB;
+  color: #9CA3AF;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.dp-chantier-step:hover {
+  border-color: #E87D50;
+  color: #E87D50;
+  background: #FFF5F0;
+}
+
+.dp-chantier-step.done {
+  border-color: #FDBA8C;
+  color: #E87D50;
+  background: #FFF5F0;
+}
+
+.dp-chantier-footer {
+  padding-top: 12px;
+  border-top: 1px solid #F3F4F6;
+  font-size: 13px;
+  color: #9CA3AF;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dp-chantier-footer strong { color: #111827; }
+
+/* ============================================================
    MESSAGES FULL (page messages)
    ============================================================ */
 .dp-msg-full {

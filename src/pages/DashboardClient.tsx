@@ -45,28 +45,18 @@ function DashboardClient() {
 
   const chantiers_detail = [
     {
-      id: 1, titre: 'Installation Borne IRVE', artisan: 'Marc Leroy', service: 'IRVE',
-      adresse: '12 rue des Fleurs, 63000 Clermont-Fd', avancement: 65, statut: 'en_cours',
-      prochaine_etape: 'Mise en service', date_rdv: 'Ven. 2 mai · 14h00',
-      etapes: [
-        { label: 'Visite technique', fait: true },
-        { label: 'Préparation chantier', fait: true },
-        { label: 'Installation borne', fait: false, encours: true },
-        { label: 'Mise en service', fait: false },
-        { label: 'Livraison', fait: false }
-      ]
+      id: 1, ref: '#P1', service: 'IRVE', titre: 'Installation borne Wallbox 7.4 kW',
+      client: 'Jean Dupont', ville: 'Clermont-Ferrand',
+      artisan: 'Marc Leroy', statut: 'en_cours',
+      currentStep: 2,
+      steps: ['Visite', 'Pose', 'Raccord.', 'Livraison']
     },
     {
-      id: 2, titre: 'Rénovation salle de bain', artisan: 'Sophie Vidal', service: 'Rénovation',
-      adresse: '12 rue des Fleurs, 63000 Clermont-Fd', avancement: 40, statut: 'en_cours',
-      prochaine_etape: 'Pose carrelage', date_rdv: "Aujourd'hui · 09h00",
-      etapes: [
-        { label: 'Dépose ancienne installation', fait: true },
-        { label: 'Plomberie', fait: true },
-        { label: 'Carrelage', fait: false, encours: true },
-        { label: 'Finitions', fait: false },
-        { label: 'Livraison', fait: false }
-      ]
+      id: 2, ref: '#P2', service: 'Rénovation', titre: 'Rénovation salle de bain',
+      client: 'Marie Laurent', ville: 'Clermont-Ferrand',
+      artisan: 'Sophie Vidal', statut: 'en_cours',
+      currentStep: 1,
+      steps: ['Dépose', 'Gros œuvre', 'Finitions', 'Livraison']
     }
   ];
 
@@ -400,34 +390,32 @@ function DashboardClient() {
             <div className="client-page">
               <h1>Mes chantiers</h1>
               <div className="chantiers-list">
-                {chantiers_detail.map(ch => (
-                  <div key={ch.id} className="chantier-card">
-                    <div className="chantier-card-header">
-                      <div>
-                        <h3>{ch.titre}</h3>
-                        <span className="chantier-artisan">Artisan : {ch.artisan}</span>
+                {chantiers_detail.map(ch => {
+                  const pct = ch.steps.length <= 1 ? 100 : Math.round((ch.currentStep / (ch.steps.length - 1)) * 100);
+                  return (
+                    <div key={ch.id} className="chantier-card">
+                      <div className="chantier-top-row">
+                        <span className="chantier-ref-label">{ch.service} · {ch.ref}</span>
+                        <span className="chantier-statut-badge">En cours</span>
                       </div>
-                      <div className="chantier-rdv">
-                        <span className="rdv-label">Prochain RDV</span>
-                        <strong>{ch.date_rdv}</strong>
+                      <h3 className="chantier-card-title">{ch.titre}</h3>
+                      <p className="chantier-card-meta">{ch.client} · {ch.ville}</p>
+                      <div className="chantier-bar-track">
+                        <div className="chantier-bar-fill" style={{ width: `${pct}%` }} />
+                      </div>
+                      <div className="chantier-steps-row">
+                        {ch.steps.map((step, i) => (
+                          <div key={i} className={`chantier-step ${i <= ch.currentStep ? 'done' : ''}`}>
+                            {step}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="chantier-card-footer">
+                        <span>Prestataire : <strong>{ch.artisan}</strong></span>
                       </div>
                     </div>
-                    <div className="chantier-progress-bar-wrap">
-                      <div className="chantier-progress-bar">
-                        <div className="chantier-progress-fill" style={{ width: `${ch.avancement}%` }} />
-                      </div>
-                      <span className="chantier-progress-pct">{ch.avancement}%</span>
-                    </div>
-                    <div className="chantier-etapes">
-                      {ch.etapes.map((e, i) => (
-                        <div key={i} className={`chantier-etape ${e.fait ? 'fait' : ''} ${e.encours ? 'encours' : ''}`}>
-                          <span className="etape-dot">{e.fait ? '✓' : e.encours ? '◉' : '○'}</span>
-                          <span>{e.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

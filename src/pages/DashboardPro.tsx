@@ -40,13 +40,18 @@ function DashboardPro() {
     { label: 'Nouveaux leads', value: '8', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>, trend: '3 non lus', page: 'leads' }
   ];
 
-  const chantiers = [
-    { id: 1, client: 'Marie L.', service: 'Borne IRVE', adresse: 'Aubière (63)', date: '12 mai 2026', statut: 'en_cours', montant: '1 400 €' },
-    { id: 2, client: 'Thomas D.', service: 'Borne IRVE', adresse: 'Riom (63)', date: '15 mai 2026', statut: 'planifie', montant: '1 600 €' },
-    { id: 3, client: 'Sophie M.', service: 'Rénovation', adresse: 'Clermont-Ferrand', date: '20 mai 2026', statut: 'planifie', montant: '2 200 €' },
-    { id: 4, client: 'Pierre R.', service: 'Borne IRVE', adresse: 'Issoire (63)', date: '2 mai 2026', statut: 'termine', montant: '1 200 €' },
-    { id: 5, client: 'Julie K.', service: 'Borne IRVE', adresse: 'Cournon (63)', date: '28 avr. 2026', statut: 'termine', montant: '1 800 €' }
-  ];
+  const [chantiers, setChantiers] = useState([
+    { id: 1, ref: '#P1', client: 'Marie L.', service: 'Borne IRVE', titre: 'Installation borne Wallbox 7.4 kW', adresse: 'Aubière (63)', date: '12 mai 2026', statut: 'en_cours', montant: '1 400 €', currentStep: 2, steps: ['Visite', 'Pose', 'Raccord.', 'Livraison'] },
+    { id: 2, ref: '#P2', client: 'Thomas D.', service: 'Borne IRVE', titre: 'Wallbox 11kW Riom', adresse: 'Riom (63)', date: '15 mai 2026', statut: 'planifie', montant: '1 600 €', currentStep: 0, steps: ['Visite', 'Pose', 'Raccord.', 'Livraison'] },
+    { id: 3, ref: '#P3', client: 'Sophie M.', service: 'Rénovation', titre: 'Rénovation salle de bain', adresse: 'Clermont-Ferrand', date: '20 mai 2026', statut: 'planifie', montant: '2 200 €', currentStep: 0, steps: ['Démolition', 'Plomberie', 'Carrelage', 'Finitions', 'Livraison'] },
+    { id: 4, ref: '#P4', client: 'Pierre R.', service: 'Borne IRVE', titre: 'Borne Wallbox Issoire', adresse: 'Issoire (63)', date: '2 mai 2026', statut: 'termine', montant: '1 200 €', currentStep: 3, steps: ['Visite', 'Pose', 'Raccord.', 'Livraison'] },
+    { id: 5, ref: '#P5', client: 'Julie K.', service: 'Borne IRVE', titre: 'Wallbox 7kW Cournon', adresse: 'Cournon (63)', date: '28 avr. 2026', statut: 'termine', montant: '1 800 €', currentStep: 3, steps: ['Visite', 'Pose', 'Raccord.', 'Livraison'] }
+  ]);
+
+  const handleUpdateStep = (id: number, stepIndex: number) => {
+    setChantiers(prev => prev.map(c => c.id === id ? { ...c, currentStep: stepIndex } : c));
+    showNotif('Avancement mis à jour ✓');
+  };
 
   const [leads, setLeads] = useState([
     { id: 1, client: 'Antoine B.', service: 'Borne IRVE Wallbox 11kW', adresse: 'Chamalières (63)', budget: '1 600 €', date: 'Il y a 2h', urgent: true, repondu: false },
@@ -408,29 +413,41 @@ function DashboardPro() {
           {/* ── CHANTIERS ── */}
           {activePage === 'chantiers' && (
             <div className="dp-page">
-              <div className="dp-card">
-                <div className="dp-card-head"><h3>Tous mes chantiers</h3></div>
-                <table className="dp-table">
-                  <thead>
-                    <tr><th>Client</th><th>Service</th><th>Adresse</th><th>Date</th><th>Montant</th><th>Statut</th></tr>
-                  </thead>
-                  <tbody>
-                    {chantiers.map(c => (
-                      <tr key={c.id}>
-                        <td><strong>{c.client}</strong></td>
-                        <td>{c.service}</td>
-                        <td>{c.adresse}</td>
-                        <td>{c.date}</td>
-                        <td><strong>{c.montant}</strong></td>
-                        <td>
-                          <span className="dp-tag" style={{ color: statutConfig[c.statut].color, background: statutConfig[c.statut].bg }}>
-                            {statutConfig[c.statut].label}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="dp-chantiers-list">
+                {chantiers.map(c => {
+                  const pct = c.steps.length <= 1 ? 100 : Math.round((c.currentStep / (c.steps.length - 1)) * 100);
+                  return (
+                    <div key={c.id} className="dp-chantier-card">
+                      <div className="dp-chantier-top">
+                        <span className="dp-chantier-ref">{c.service} · {c.ref}</span>
+                        <span className="dp-tag" style={{ color: statutConfig[c.statut].color, background: statutConfig[c.statut].bg }}>
+                          {statutConfig[c.statut].label}
+                        </span>
+                      </div>
+                      <h3 className="dp-chantier-titre">{c.titre}</h3>
+                      <p className="dp-chantier-meta">{c.client} · {c.adresse}</p>
+                      <div className="dp-chantier-bar-track">
+                        <div className="dp-chantier-bar-fill" style={{ width: `${pct}%`, background: statutConfig[c.statut].color }} />
+                      </div>
+                      <div className="dp-chantier-steps-row">
+                        {c.steps.map((step, i) => (
+                          <button
+                            key={i}
+                            className={`dp-chantier-step ${i <= c.currentStep ? 'done' : ''}`}
+                            onClick={() => handleUpdateStep(c.id, i)}
+                            title={`Marquer jusqu'à "${step}"`}
+                          >
+                            {step}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="dp-chantier-footer">
+                        <span>Client : <strong>{c.client}</strong></span>
+                        <span>{c.montant}</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
