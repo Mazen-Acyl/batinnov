@@ -506,7 +506,7 @@
 /* ===== SECTION APPLICATION ===== */
 .app-section {
   background: linear-gradient(135deg, #EDF4F0 0%, #D6EAE0 100%);
-  padding: 72px 0 0;
+  padding: 72px 0 60px;
   overflow: hidden;
 }
 
