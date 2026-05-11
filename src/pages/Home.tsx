@@ -6,6 +6,7 @@ function Home() {
     {
       id: 'renovation',
       title: 'Rénovation',
+      color: '#E87D50',
       image: '/images/renovation.jpg',
       desc: 'Cuisine, salle de bain, extension, ravalement...',
       link: '/services/renovation'
@@ -13,6 +14,7 @@ function Home() {
     {
       id: 'courtage',
       title: 'Courtage',
+      color: '#2563EB',
       image: '/images/amenagement.jpg',
       desc: 'Financement, prêt travaux, rachat de crédit...',
       link: '/services/courtage'
@@ -20,6 +22,7 @@ function Home() {
     {
       id: 'services-maison',
       title: 'Aide à la personne',
+      color: '#4A7A5C',
       image: '/images/pmr.jpg',
       desc: 'Petite peinture, jardinage, entretien...',
       link: '/services/services-maison'
@@ -27,6 +30,7 @@ function Home() {
     {
       id: 'irve',
       title: 'Borne IRVE',
+      color: '#D97706',
       image: '/images/irve.jpg',
       desc: 'Installation bornes recharge électrique...',
       link: '/services/irve'
@@ -97,13 +101,13 @@ function Home() {
           <div className="services-grid">
             {services.map((service) => (
               <Link to={service.link} key={service.id} className="service-card">
-                <div className="service-image">
+                <div className="service-image-wrap">
                   <img src={service.image} alt={service.title} />
                 </div>
                 <div className="service-card-body">
-                  <h3>{service.title}</h3>
+                  <h3 style={{ color: service.color }}>{service.title}</h3>
                   <p>{service.desc}</p>
-                  <span className="service-card-link">Demander un devis →</span>
+                  <span className="service-card-link" style={{ color: service.color }}>Demander un devis →</span>
                 </div>
               </Link>
             ))}
