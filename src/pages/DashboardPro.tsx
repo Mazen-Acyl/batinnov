@@ -49,7 +49,11 @@ function DashboardPro() {
   ]);
 
   const handleUpdateStep = (id: number, stepIndex: number) => {
-    setChantiers(prev => prev.map(c => c.id === id ? { ...c, currentStep: stepIndex } : c));
+    setChantiers(prev => prev.map(c => {
+      if (c.id !== id) return c;
+      const isLast = stepIndex === c.steps.length - 1;
+      return { ...c, currentStep: stepIndex, statut: isLast ? 'termine' : stepIndex === 0 ? 'planifie' : 'en_cours' };
+    }));
     showNotif('Avancement mis à jour ✓');
   };
 
