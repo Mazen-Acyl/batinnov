@@ -14,7 +14,7 @@ function Home() {
     {
       id: 'courtage',
       title: 'Courtage',
-      color: '#2563EB',
+      color: '#7C3AED',
       image: '/images/amenagement.jpg',
       desc: 'Financement, prêt travaux, rachat de crédit...',
       link: '/services/courtage'
@@ -30,7 +30,7 @@ function Home() {
     {
       id: 'irve',
       title: 'Borne IRVE',
-      color: '#D97706',
+      color: '#2563EB',
       image: '/images/irve.jpg',
       desc: 'Installation bornes recharge électrique...',
       link: '/services/irve'
