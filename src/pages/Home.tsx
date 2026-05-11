@@ -94,6 +94,33 @@ function Home() {
         </div>
       </section>
 
+      {/* BANDE CHIFFRES CLÉS */}
+      <section className="stats-strip">
+        <div className="container">
+          <div className="stats-strip-grid">
+            <div className="stats-strip-item">
+              <strong>200+</strong>
+              <span>Artisans certifiés</span>
+            </div>
+            <div className="stats-strip-divider" />
+            <div className="stats-strip-item">
+              <strong>4,8/5</strong>
+              <span>Note moyenne</span>
+            </div>
+            <div className="stats-strip-divider" />
+            <div className="stats-strip-item">
+              <strong>2 000+</strong>
+              <span>Chantiers réalisés</span>
+            </div>
+            <div className="stats-strip-divider" />
+            <div className="stats-strip-item">
+              <strong>48h</strong>
+              <span>Délai de réponse</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* SERVICES POPULAIRES STYLE WECASA */}
       <section id="services-section" className="services-section">
         <div className="container">
@@ -111,6 +138,54 @@ function Home() {
                 </div>
               </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* COMMENT ÇA MARCHE */}
+      <section className="how-section">
+        <div className="container">
+          <div className="how-header">
+            <span className="how-tag">Simple & rapide</span>
+            <h2>Comment ça marche ?</h2>
+            <p>4 étapes pour concrétiser votre projet</p>
+          </div>
+          <div className="how-steps">
+            <div className="how-step">
+              <div className="how-step-num">1</div>
+              <div className="how-step-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </div>
+              <h3>Décrivez votre projet</h3>
+              <p>Remplissez notre formulaire en 2 minutes. Type de travaux, budget, localisation.</p>
+            </div>
+            <div className="how-step-arrow">→</div>
+            <div className="how-step">
+              <div className="how-step-num">2</div>
+              <div className="how-step-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              </div>
+              <h3>Recevez des devis</h3>
+              <p>Des artisans qualifiés de votre région vous répondent sous 48h.</p>
+            </div>
+            <div className="how-step-arrow">→</div>
+            <div className="how-step">
+              <div className="how-step-num">3</div>
+              <div className="how-step-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="23 11 17 11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>
+              </div>
+              <h3>Choisissez votre artisan</h3>
+              <p>Comparez les profils, avis et tarifs. Vous décidez en toute liberté.</p>
+            </div>
+            <div className="how-step-arrow">→</div>
+            <div className="how-step">
+              <div className="how-step-num">4</div>
+              <div className="how-step-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <h3>Profitez du résultat</h3>
+              <p>Suivez l'avancement en temps réel et validez à la livraison.</p>
+            </div>
           </div>
         </div>
       </section>
