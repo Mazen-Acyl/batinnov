@@ -19,10 +19,10 @@ const THEMES = {
     msgBg: '#FFFAF7',
   },
   blue: {
-    primary: '#2563EB', dark: '#1D4ED8',
-    light: '#EFF6FF', border: '#BFDBFE',
-    chipBg: '#EFF6FF', chipText: '#2563EB', chipBorder: '#BFDBFE',
-    msgBg: '#F7FAFF',
+    primary: '#111827', dark: '#1F2937',
+    light: '#F3F4F6', border: '#D1D5DB',
+    chipBg: '#F3F4F6', chipText: '#111827', chipBorder: '#D1D5DB',
+    msgBg: '#F9FAFB',
   },
 };
 
