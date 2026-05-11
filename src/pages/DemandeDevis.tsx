@@ -51,6 +51,10 @@ function DemandeDevis() {
   });
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
+
+  useEffect(() => {
     if (step === 3 && isAuthenticated) setSuccess(true);
   }, [step, isAuthenticated]);
 
