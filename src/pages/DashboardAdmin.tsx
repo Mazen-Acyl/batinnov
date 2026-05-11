@@ -35,12 +35,28 @@ const Icon = {
 };
 
 /* ── Données statiques ── */
-const utilisateurs = [
+const initUtilisateurs = [
   { id: 1, nom: 'Jean Dupont', email: 'jean.dupont@email.com', role: 'client', ville: 'Clermont-Ferrand', statut: 'actif', cree: '12 avr.', depense: '4 280 €' },
   { id: 2, nom: 'Marc Leroy', email: 'contact@leroy-elec.fr', role: 'pro', ville: 'Clermont-Ferrand', statut: 'actif', cree: '8 avr.', depense: '—' },
   { id: 3, nom: 'Nadia Benali', email: 'nadia.benali@email.com', role: 'client', ville: 'Riom', statut: 'actif', cree: '15 avr.', depense: '96 €' },
   { id: 4, nom: 'Sophie Vidal', email: 'contact@vidal-renov.fr', role: 'pro', ville: 'Issoire', statut: 'en_attente', cree: '3 mai', depense: '—' },
   { id: 5, nom: 'Paul Martin', email: 'paul.martin@email.com', role: 'client', ville: 'Chamalières', statut: 'actif', cree: '20 avr.', depense: '3 800 €' },
+];
+
+const activiteRecente = [
+  { id: 1, texte: 'Nouveau client inscrit : Paul Martin', temps: 'il y a 8 min', color: '#10B981' },
+  { id: 2, texte: 'Dossier reçu : Vidal Rénov (Issoire)', temps: 'il y a 42 min', color: '#E87D50' },
+  { id: 3, texte: 'Paiement reçu : F2026-0341 · 1 428 €', temps: 'il y a 2h', color: '#2563EB' },
+  { id: 4, texte: 'RDV demandé : Marc Leroy / Jean Dupont', temps: 'il y a 3h', color: '#6366F1' },
+  { id: 5, texte: 'Service démarré : Installation IRVE #P1', temps: 'il y a 5h', color: '#4A7A5C' },
+];
+
+const monthlyCA = [
+  { mois: 'Jan', montant: 12400 },
+  { mois: 'Fév', montant: 15200 },
+  { mois: 'Mar', montant: 18600 },
+  { mois: 'Avr', montant: 22100 },
+  { mois: 'Mai', montant: 14300 },
 ];
 
 const initialDossiers = [
@@ -59,9 +75,9 @@ const initialDossiers = [
 ];
 
 const services = [
-  { id: 1, ref: 'IRVE · #P1', titre: 'Installation borne Wallbox 7.4 kW', client: 'Jean Dupont', pro: 'Marc Leroy', ville: 'Clermont-Ferrand', statut: 'en_cours', avancement: 65, etapes: ['Visite', 'Pose', 'Raccord.', 'Livraison'], etapeFaite: 2 },
-  { id: 2, ref: 'TRAVAUX · #P2', titre: 'Rénovation salle de bain', client: 'Paul Martin', pro: 'Sophie Vidal', ville: 'Chamalières', statut: 'bloque', avancement: 30, etapes: ['Devis', 'Dépôse', 'Avenant', 'Finitions'], etapeFaite: 1 },
-  { id: 3, ref: 'AIDE · #P3', titre: 'Aide à domicile hebdomadaire', client: 'Nadia Benali', pro: 'KB Assistance', ville: 'Riom', statut: 'a_demarrer', avancement: 0, etapes: ['Signature', 'Démarrage', 'Suivi'], etapeFaite: 0 },
+  { id: 1, ref: 'IRVE · #P1', titre: 'Installation borne Wallbox 7.4 kW', client: 'Jean Dupont', pro: 'Marc Leroy', ville: 'Clermont-Ferrand', statut: 'en_cours', currentStep: 2, steps: ['Visite', 'Pose', 'Raccord.', 'Livraison'] },
+  { id: 2, ref: 'TRAVAUX · #P2', titre: 'Rénovation salle de bain', client: 'Paul Martin', pro: 'Sophie Vidal', ville: 'Chamalières', statut: 'bloque', currentStep: 1, steps: ['Devis', 'Démolition', 'Avenant', 'Finitions'] },
+  { id: 3, ref: 'AIDE · #P3', titre: 'Aide à domicile hebdomadaire', client: 'Nadia Benali', pro: 'KB Assistance', ville: 'Riom', statut: 'a_demarrer', currentStep: 0, steps: ['Signature', 'Démarrage', 'Suivi'] },
 ];
 
 const factures = [
@@ -85,6 +101,7 @@ export default function DashboardAdmin() {
   const [selectedDossierId, setSelectedDossierId] = useState<number | null>(null);
   const [dossiers, setDossiers] = useState(initialDossiers.map(d => ({ ...d, docs: d.docs.map(doc => ({ ...doc })) })));
   const [rdvList, setRdvList] = useState(initialRdvs.map(r => ({ ...r })));
+  const [utilisateurs, setUtilisateurs] = useState(initUtilisateurs);
   const [notif, setNotif] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -133,6 +150,14 @@ export default function DashboardAdmin() {
     setDossiers(prev => prev.map(d => d.id === selectedDossier.id ? { ...d, statut: 'refuse' } : d));
     setSelectedDossierId(null);
     showNotif(`Dossier ${nom} refusé`, 'error');
+  };
+
+  /* ── Actions utilisateurs ── */
+  const handleToggleStatut = (userId: number) => {
+    setUtilisateurs(prev => prev.map(u =>
+      u.id === userId ? { ...u, statut: u.statut === 'actif' ? 'suspendu' : 'actif' } : u
+    ));
+    showNotif('Statut utilisateur mis à jour ✓');
   };
 
   /* ── Actions RDV ── */
@@ -282,6 +307,21 @@ export default function DashboardAdmin() {
             </div>
 
             <div className="admin-section">
+              <div className="admin-section-head">
+                <h3>Activité récente</h3>
+              </div>
+              <div className="admin-activity-feed">
+                {activiteRecente.map(a => (
+                  <div key={a.id} className="admin-activity-row">
+                    <span className="admin-activity-dot" style={{ background: a.color }} />
+                    <span className="admin-activity-text">{a.texte}</span>
+                    <span className="admin-activity-time">{a.temps}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="admin-section">
               <h3>Modules actifs</h3>
               <div className="admin-modules-grid">
                 {navItems.filter(n => n.id !== 'accueil').map(item => (
@@ -345,6 +385,12 @@ export default function DashboardAdmin() {
                   </div>
                   <span className={`admin-role-badge ${u.role}`}>{u.role === 'client' ? 'Client' : 'Pro'}</span>
                   <span className={`admin-statut-dot ${u.statut}`} />
+                  <button
+                    className={`admin-user-action-btn ${u.statut === 'actif' ? 'suspend' : 'activate'}`}
+                    onClick={() => handleToggleStatut(u.id)}
+                  >
+                    {u.statut === 'actif' ? 'Suspendre' : 'Activer'}
+                  </button>
                 </div>
               ))}
               {filteredUsers.length === 0 && (
@@ -517,6 +563,7 @@ export default function DashboardAdmin() {
             <div className="admin-services-list">
               {filteredServices.map(s => {
                 const cfg = statutServiceConfig[s.statut];
+                const pct = s.steps.length <= 1 ? 100 : Math.round((s.currentStep / (s.steps.length - 1)) * 100);
                 return (
                   <div key={s.id} className="admin-service-card">
                     <div className="admin-service-head">
@@ -528,11 +575,11 @@ export default function DashboardAdmin() {
                       <span className="admin-statut-pill" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
                     </div>
                     <div className="admin-service-progress-bar">
-                      <div className="admin-service-progress-fill" style={{ width: `${s.avancement}%`, background: s.statut === 'bloque' ? '#DC2626' : '#2563EB' }} />
+                      <div className="admin-service-progress-fill" style={{ width: `${pct}%`, background: cfg.color }} />
                     </div>
                     <div className="admin-service-etapes">
-                      {s.etapes.map((e, i) => (
-                        <span key={i} className={`admin-etape ${i < s.etapeFaite ? 'fait' : i === s.etapeFaite ? 'encours' : ''}`}>{e}</span>
+                      {s.steps.map((step, i) => (
+                        <span key={i} className={`admin-etape ${i <= s.currentStep ? 'fait' : ''} ${i === s.currentStep ? 'encours' : ''}`}>{step}</span>
                       ))}
                     </div>
                     <div className="admin-service-footer">
@@ -571,6 +618,21 @@ export default function DashboardAdmin() {
             <div className="admin-kpi-grid">
               <div className="admin-kpi"><span className="admin-kpi-num">4</span><span>Factures</span></div>
               <div className="admin-kpi"><span className="admin-kpi-num orange">1</span><span>Devis à acter</span></div>
+            </div>
+
+            <div className="admin-section" style={{ marginBottom: 0 }}>
+              <h3 style={{ marginBottom: 16 }}>Chiffre d'affaires mensuel</h3>
+              <div className="admin-chart">
+                {(() => { const max = Math.max(...monthlyCA.map(m => m.montant)); return monthlyCA.map(m => (
+                  <div key={m.mois} className="admin-chart-col">
+                    <span className="admin-chart-val">{(m.montant / 1000).toFixed(0)}k€</span>
+                    <div className="admin-chart-bar-wrap">
+                      <div className="admin-chart-bar" style={{ height: `${Math.round((m.montant / max) * 100)}%` }} />
+                    </div>
+                    <span className="admin-chart-label">{m.mois}</span>
+                  </div>
+                )); })()}
+              </div>
             </div>
 
             <div className="admin-filter-row">

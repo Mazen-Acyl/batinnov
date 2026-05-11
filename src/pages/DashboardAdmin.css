@@ -809,6 +809,129 @@
 
 .admin-statut-dot.actif { background: var(--success); }
 .admin-statut-dot.en_attente { background: var(--warning); }
+.admin-statut-dot.suspendu { background: var(--danger); }
+
+.admin-user-action-btn {
+  font-size: 11.5px;
+  font-weight: 700;
+  font-family: 'Nunito', sans-serif;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1.5px solid;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.admin-user-row:hover .admin-user-action-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.admin-user-action-btn.suspend {
+  color: var(--danger);
+  border-color: #FECACA;
+  background: var(--danger-soft);
+}
+
+.admin-user-action-btn.suspend:hover { background: #FEE2E2; }
+
+.admin-user-action-btn.activate {
+  color: var(--success);
+  border-color: #A7F3D0;
+  background: var(--success-soft);
+}
+
+.admin-user-action-btn.activate:hover { background: #D1FAE5; }
+
+/* ============================================================
+   ACTIVITÉ RÉCENTE
+   ============================================================ */
+.admin-activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.admin-activity-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-activity-row:last-child { border-bottom: none; }
+
+.admin-activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.admin-activity-text {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.admin-activity-time {
+  font-size: 11.5px;
+  color: var(--text-4);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   GRAPHIQUE CA MENSUEL
+   ============================================================ */
+.admin-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 140px;
+  padding: 0 4px 0;
+  margin-bottom: 24px;
+}
+
+.admin-chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+
+.admin-chart-val {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.admin-chart-bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.admin-chart-bar {
+  width: 100%;
+  background: linear-gradient(180deg, #3B82F6 0%, #2563EB 100%);
+  border-radius: 6px 6px 0 0;
+  min-height: 6px;
+  transition: height 0.4s ease;
+}
+
+.admin-chart-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-4);
+}
 
 /* ============================================================
    DOSSIER
