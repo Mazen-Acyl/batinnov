@@ -104,7 +104,8 @@
   border-radius: 16px;
   overflow: hidden;
   transition: transform 0.25s, box-shadow 0.25s;
-  display: block;
+  display: flex;
+  flex-direction: column;
   cursor: pointer;
   border: 1px solid #EAECF0;
   text-decoration: none;
@@ -444,6 +445,13 @@
 /* SERVICE CARD BODY */
 .service-card-body {
   padding: 18px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.service-card-body p {
+  flex: 1;
 }
 
 .service-card-body h3 {
