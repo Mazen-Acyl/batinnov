@@ -503,6 +503,127 @@
   color: #DDDDDD;
 }
 
+/* ===== SECTION APPLICATION ===== */
+.app-section {
+  background: linear-gradient(135deg, #EDF4F0 0%, #D6EAE0 100%);
+  padding: 72px 0 0;
+  overflow: hidden;
+}
+
+.app-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: flex-end;
+  gap: 48px;
+}
+
+.app-text {
+  padding-bottom: 72px;
+}
+
+.app-text h2 {
+  font-family: 'Nunito', sans-serif;
+  font-size: 38px;
+  font-weight: 900;
+  color: #111827;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 18px;
+}
+
+.app-text p {
+  font-size: 15px;
+  color: #4B5563;
+  line-height: 1.7;
+  margin-bottom: 32px;
+  max-width: 420px;
+}
+
+.app-badges {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.app-badge {
+  display: block;
+  height: 52px;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.app-badge img {
+  height: 100%;
+  width: auto;
+  display: block;
+  border-radius: 10px;
+}
+
+.app-badge:hover {
+  transform: translateY(-2px);
+  opacity: 0.88;
+}
+
+.app-pro-link {
+  font-size: 13.5px;
+  color: #6B7280;
+  margin-bottom: 0 !important;
+}
+
+.app-link {
+  color: #4A7A5C;
+  font-weight: 700;
+  text-decoration: none;
+}
+.app-link:hover { text-decoration: underline; }
+
+/* TÉLÉPHONES */
+.app-phones {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: -20px;
+  position: relative;
+}
+
+.app-phone-1 {
+  height: 420px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 28px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+  position: relative;
+  z-index: 2;
+  transform: rotate(-3deg) translateY(10px);
+}
+
+.app-phone-2 {
+  height: 380px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 28px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.14);
+  position: relative;
+  z-index: 1;
+  transform: rotate(3deg) translateX(-20px) translateY(15px);
+}
+
+@media (max-width: 900px) {
+  .app-inner {
+    grid-template-columns: 1fr;
+  }
+  .app-text {
+    padding-bottom: 24px;
+    text-align: center;
+  }
+  .app-text p { max-width: 100%; }
+  .app-badges { justify-content: center; }
+  .app-phones { justify-content: center; }
+  .app-phone-1 { height: 300px; }
+  .app-phone-2 { height: 260px; }
+  .app-text h2 { font-size: 28px; }
+}
+
 /* ===== BANDE DÉFILANTE ===== */
 .ticker-wrapper {
   background: var(--primary, #4A7A5C);

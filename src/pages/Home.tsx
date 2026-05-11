@@ -182,6 +182,41 @@ function Home() {
       </section>
 
 
+      {/* SECTION APPLICATION */}
+      <section className="app-section">
+        <div className="container">
+          <div className="app-inner">
+
+            <div className="app-text">
+              <h2>Téléchargez notre application</h2>
+              <p>
+                Gérez vos projets encore plus facilement depuis votre téléphone.
+                Suivez l'avancement de vos chantiers, échangez avec vos artisans
+                et recevez vos devis en temps réel, où que vous soyez.
+              </p>
+              <div className="app-badges">
+                <a href="#" className="app-badge">
+                  <img src="/images/payment/googleplay.png" alt="Disponible sur Google Play" />
+                </a>
+                <a href="#" className="app-badge">
+                  <img src="/images/payment/appstore.png" alt="Disponible sur l'App Store" />
+                </a>
+              </div>
+              <p className="app-pro-link">
+                Vous êtes un professionnel ?{' '}
+                <Link to="/pro" className="app-link">Rejoignez le réseau →</Link>
+              </p>
+            </div>
+
+            <div className="app-phones">
+              <img src="/images/appli.png" alt="App BATINNOV" className="app-phone-1" />
+              <img src="/images/appli2.png" alt="App BATINNOV" className="app-phone-2" />
+            </div>
+
+          </div>
+        </div>
+      </section>
+
       {/* BANDE DÉFILANTE - entre We are BATINNOV et le footer */}
       <div className="ticker-wrapper">
         <div className="ticker-track">
