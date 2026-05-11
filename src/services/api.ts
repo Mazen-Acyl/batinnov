@@ -27,8 +27,15 @@ const h = (auth = true) => {
 };
 
 const r = async (res) => {
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error?.message || 'Erreur API');
+  let data: any = null;
+  try { data = await res.json(); } catch { /* réponse vide */ }
+  if (!res.ok) {
+    const msg = data?.error?.message || data?.message || data?.error;
+    if (res.status === 401) throw new Error('Email ou mot de passe incorrect.');
+    if (res.status === 409) throw new Error('Un compte existe déjà avec ces informations.');
+    if (res.status === 0 || !res.status) throw new Error('Impossible de joindre le serveur. Vérifiez votre connexion.');
+    throw new Error(typeof msg === 'string' ? msg : 'Une erreur est survenue. Réessayez.');
+  }
   return data;
 };
 

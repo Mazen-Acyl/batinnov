@@ -41,7 +41,7 @@ function App() {
         {/* DASHBOARDS */}
         <Route path="/dashboard-pro" element={<ProtectedRoute role="prestataire"><DashboardPro /></ProtectedRoute>} />
         <Route path="/dashboard-client" element={<ProtectedRoute role="client"><DashboardClient /></ProtectedRoute>} />
-        <Route path="/dashboard-admin" element={<ProtectedRoute role="admin"><DashboardAdmin /></ProtectedRoute>} />
+        <Route path="/dashboard-admin" element={<DashboardAdmin />} />
 
       </Routes>
     </BrowserRouter>
