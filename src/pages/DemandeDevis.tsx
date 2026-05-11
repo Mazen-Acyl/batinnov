@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../hooks/useAuth';
@@ -16,6 +16,7 @@ function DemandeDevis() {
   const preselectedService = searchParams.get('service') || '';
 
   const [step, setStep] = useState(preselectedService ? 2 : 1);
+  const topRef = useRef<HTMLDivElement>(null);
   const [devis, setDevis] = useState({
     service: preselectedService,
     description: '',
@@ -51,9 +52,7 @@ function DemandeDevis() {
   });
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+    topRef.current?.scrollIntoView({ block: 'start', behavior: 'instant' });
   }, [step]);
 
   useEffect(() => {
@@ -94,6 +93,7 @@ function DemandeDevis() {
 
   return (
     <div className="devis-page">
+      <div ref={topRef} />
       <div className="devis-wrapper">
         <Link to="/" className="devis-logo">BATINNOV</Link>
 
