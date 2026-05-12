@@ -1,7 +1,7 @@
 /* HERO STYLE WECASA */
 .hero {
   padding: 60px 0 80px;
-  background: var(--white);
+  background: var(--warm-bg);
 }
 
 .hero-content {
@@ -12,9 +12,10 @@
 }
 
 .hero-text h1 {
-  font-family: 'Nunito', sans-serif;
-  font-size: 64px;
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-size: 68px;
+  font-weight: 500;
+  font-variation-settings: "opsz" 72, "SOFT" 40;
   line-height: 1.05;
   margin-bottom: 24px;
   color: var(--black);
@@ -22,9 +23,10 @@
 }
 
 .hero-text p {
-  font-size: 20px;
-  line-height: 1.5;
-  color: var(--gray-700);
+  font-family: var(--font);
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--gray-600);
   margin-bottom: 32px;
   max-width: 480px;
 }
@@ -80,7 +82,7 @@
 
 /* BANDE CHIFFRES CLÉS */
 .stats-strip {
-  background: #111827;
+  background: var(--primary);
   padding: 36px 0;
 }
 
@@ -101,7 +103,7 @@
 }
 
 .stats-strip-item strong {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 36px;
   font-weight: 900;
   color: #ffffff;
@@ -137,7 +139,7 @@
 /* COMMENT ÇA MARCHE */
 .how-section {
   padding: 80px 0;
-  background: #ffffff;
+  background: var(--warm-bg);
 }
 
 .how-header {
@@ -159,7 +161,7 @@
 }
 
 .how-header h2 {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 36px;
   font-weight: 800;
   color: var(--black);
@@ -200,7 +202,7 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 16px;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
 }
 
 .how-step-icon {
@@ -216,7 +218,7 @@
 }
 
 .how-step h3 {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 16px;
   font-weight: 800;
   color: var(--black);
@@ -256,7 +258,7 @@
 }
 
 .services-section h2 {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 36px;
   font-weight: 700;
   margin-bottom: 40px;
@@ -310,7 +312,7 @@
 /* AVIS SECTION */
 .avis-section {
   padding: 80px 0;
-  background: var(--white);
+  background: var(--warm-bg-alt, #EDEAE4);
 }
 
 .avis-header {
@@ -319,7 +321,7 @@
 }
 
 .avis-header h2 {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 36px;
   font-weight: 700;
   margin-bottom: 12px;
@@ -449,7 +451,7 @@
 
 /* TEXTE DROITE */
 .we-are-text h2 {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 40px;
   font-weight: 800;
   margin-bottom: 28px;
@@ -506,7 +508,7 @@
   }
   
   .we-are-text h2 {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
     font-size: 30px;
   }
   
@@ -566,7 +568,7 @@
   }
   
   .hero-text h1 {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
     font-size: 48px;
   }
   
@@ -585,7 +587,7 @@
   }
   
   .hero-text h1 {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
     font-size: 36px;
   }
   
@@ -626,7 +628,7 @@
 }
 
 .service-card-body h3 {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 16px;
   font-weight: 800;
   margin-bottom: 6px;
@@ -643,7 +645,7 @@
 .service-card-link {
   font-size: 13px;
   font-weight: 700;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -693,7 +695,7 @@
 }
 
 .app-text h2 {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 38px;
   font-weight: 900;
   color: #111827;
@@ -825,7 +827,7 @@
 }
 
 .ticker-content span {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 15px;
   font-weight: 700;
   color: #ffffff;

@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-ui);
 }
 
 .inscription-wrapper {
@@ -22,7 +22,7 @@
 /* LOGO BATINNOV - grand */
 .inscription-logo {
   display: inline-block;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-ui);
   font-size: 28px;
   font-weight: 900;
   color: #000000;
@@ -95,7 +95,7 @@
   font-size: 13px;
   font-weight: 600;
   color: #444444;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-ui);
 }
 
 .label-hint {
@@ -113,7 +113,7 @@
   border-radius: 10px;
   font-size: 15px;
   color: #000000;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-ui);
   background: #FAFAFA;
   transition: border-color 0.2s;
 }
@@ -148,7 +148,7 @@
   font-size: 12px;
   font-weight: 700;
   color: #4A7A5C;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-ui);
   transition: opacity 0.2s;
 }
 
@@ -187,7 +187,7 @@
   color: #ffffff;
   border: none;
   border-radius: 10px;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-ui);
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -250,7 +250,7 @@
   background: #ffffff;
   border: 2px solid #E0E0E0;
   border-radius: 10px;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-ui);
   font-size: 15px;
   font-weight: 700;
   color: #1A1A1A;

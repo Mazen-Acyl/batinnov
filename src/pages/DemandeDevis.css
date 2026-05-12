@@ -5,7 +5,7 @@
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
 }
 
 .devis-wrapper {
@@ -20,7 +20,7 @@
 
 .devis-logo {
   display: inline-block;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 26px;
   font-weight: 900;
   color: #000000;
@@ -102,7 +102,7 @@
   color: #888888;
   font-size: 13px;
   font-weight: 700;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   cursor: pointer;
   padding: 0;
   margin-bottom: 16px;
@@ -131,7 +131,7 @@
   cursor: pointer;
   text-align: left;
   transition: all 0.2s;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
 }
 
 .devis-service-card:hover {
@@ -179,7 +179,7 @@
   border-radius: 10px;
   font-size: 14px;
   color: #000000;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   background: #FAFAFA;
   transition: border-color 0.2s;
   outline: none;
@@ -217,7 +217,7 @@
   color: #ffffff;
   border: none;
   border-radius: 10px;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -246,7 +246,7 @@
   color: var(--primary);
   border: 2px solid var(--primary);
   border-radius: 10px;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -300,7 +300,7 @@
   font-size: 12px;
   font-weight: 700;
   color: var(--primary);
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
 }
 
 .devis-forgot {
@@ -368,7 +368,7 @@
   background: #ffffff;
   border: 2px solid #E0E0E0;
   border-radius: 10px;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 15px;
   font-weight: 700;
   color: #1A1A1A;

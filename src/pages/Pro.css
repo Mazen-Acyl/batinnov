@@ -389,7 +389,7 @@
   font-size: 12px;
   font-weight: 700;
   margin-top: 5px;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
 }
 
 .siret-hint.valid { color: #10B981; }

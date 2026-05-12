@@ -30,7 +30,7 @@
 
 .footer-logo {
   display: inline-block;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-ui);
   font-size: 30px;
   font-weight: 900;
   color: #ffffff;
@@ -41,7 +41,7 @@
 }
 
 .footer-slogan-text {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-ui);
   font-size: 15px;
   font-style: italic;
   color: #555555;
@@ -64,7 +64,7 @@
   font-size: 13px;
   color: #444444;
   font-weight: 600;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-ui);
 }
 
 /* 4 COLONNES LIENS */
@@ -288,7 +288,7 @@
   font-size: 14px;
   color: #333333;
   white-space: nowrap;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-ui);
 }
 
 .footer-app-btns {
@@ -321,7 +321,7 @@
 .footer-social > p {
   font-size: 14px;
   color: #333333;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-ui);
 }
 
 .social-links {

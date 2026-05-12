@@ -55,7 +55,7 @@
   color: #111827;
   letter-spacing: -0.03em;
   text-transform: uppercase;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-ui);
 }
 
 .client-logo-tag {

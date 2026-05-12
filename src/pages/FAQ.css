@@ -2,7 +2,7 @@
   min-height: 100vh;
   background: #F5F5F0;
   padding: 60px 0 80px;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
 }
 
 .faq-header {
@@ -45,7 +45,7 @@
   flex: 1;
   border: none;
   background: none;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 15px;
   color: #000;
   outline: none;
@@ -67,7 +67,7 @@
   border-radius: 20px;
   border: 2px solid #EBEBEB;
   background: #fff;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 14px;
   font-weight: 700;
   color: #555;
@@ -123,7 +123,7 @@
   padding: 20px 24px;
   background: none;
   border: none;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 15px;
   font-weight: 700;
   color: #000;
@@ -166,7 +166,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
 }
 
 /* CONTACT PANEL */
@@ -239,7 +239,7 @@
   background: #4A7A5C;
   color: #fff;
   border-radius: 10px;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 15px;
   font-weight: 700;
   text-align: center;

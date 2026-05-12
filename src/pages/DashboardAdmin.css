@@ -106,7 +106,7 @@
   color: #FFFFFF;
   letter-spacing: -0.03em;
   text-transform: uppercase;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-ui);
 }
 
 .admin-logo-tag {
@@ -814,7 +814,7 @@
 .admin-user-action-btn {
   font-size: 11.5px;
   font-weight: 700;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-ui);
   padding: 4px 12px;
   border-radius: 6px;
   border: 1.5px solid;
