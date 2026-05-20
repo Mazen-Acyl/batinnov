@@ -1,0 +1,299 @@
+/* FORMULAIRE INTELLIGENT BATINNOV */
+
+.formulaire-intelligent {
+  background: var(--bg-light);
+  min-height: calc(100vh - 80px);
+  padding: 60px 0;
+}
+
+.formulaire-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.formulaire-header h1 {
+  font-size: 42px;
+  margin-bottom: 12px;
+  color: var(--primary-dark);
+}
+
+.formulaire-header p {
+  font-size: 18px;
+  color: var(--gray-600);
+}
+
+/* PROGRESS BAR */
+.progress-bar {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: var(--gray-200);
+  border-radius: 20px;
+  margin-bottom: 32px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  border-radius: 20px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-text {
+  position: absolute;
+  top: 14px;
+  right: 0;
+  font-size: 14px;
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+/* CARTE FORMULAIRE */
+.formulaire-card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 48px;
+  box-shadow: var(--shadow);
+  max-width: 720px;
+  margin: 40px auto 0;
+}
+
+.etape-titre {
+  font-size: 28px;
+  margin-bottom: 32px;
+  color: var(--primary-dark);
+}
+
+/* GRILLE DE CHOIX (cartes radio) */
+.choix-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.choix-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.choix-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+  background: var(--white);
+}
+
+.choix-card:hover {
+  border-color: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.choix-card.selected {
+  border-color: var(--primary);
+  background: rgba(74, 122, 92, 0.05);
+}
+
+.choix-card input[type='radio'] {
+  display: none;
+}
+
+.choix-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.choix-titre {
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 4px;
+}
+
+.choix-desc {
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+/* FORM GROUPS */
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--gray-700);
+}
+
+.form-group input[type='text'],
+.form-group input[type='email'],
+.form-group input[type='tel'],
+.form-group input[type='number'],
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-family: var(--font-sans);
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  background: var(--white);
+  transition: var(--transition);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(74, 122, 92, 0.15);
+}
+
+.radio-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.radio-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 400;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.checkbox-group input[type='checkbox'] {
+  margin-top: 4px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+/* ENRICHISSEMENT INSEE */
+.enrichissement-card {
+  background: rgba(74, 122, 92, 0.08);
+  border-left: 4px solid var(--primary);
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.enrichissement-titre {
+  color: var(--primary-dark);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* DOUBLON */
+.alerte-doublon {
+  background: #fff8e1;
+  border-left: 4px solid #f5a623;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.alerte-doublon a {
+  color: var(--primary-dark);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* RÉCAPITULATIF */
+.recap-card {
+  background: var(--gray-50);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.recap-card p {
+  margin-bottom: 8px;
+  color: var(--gray-700);
+}
+
+.recap-info {
+  text-align: center;
+  color: var(--gray-600);
+  font-size: 14px;
+  font-style: italic;
+}
+
+/* ERREURS */
+.erreur {
+  color: #c84a31;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+/* ACTIONS */
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--gray-200);
+}
+
+.form-actions .btn {
+  flex: 1;
+  max-width: 240px;
+}
+
+.form-actions .btn:only-child {
+  margin-left: auto;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .formulaire-card {
+    padding: 24px 20px;
+  }
+
+  .formulaire-header h1 {
+    font-size: 28px;
+  }
+
+  .choix-grid,
+  .choix-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    max-width: 100%;
+  }
+}

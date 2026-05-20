@@ -40,6 +40,10 @@ export const authAPI = {
   changePassword: async (body) => {
     return r(await fetch(`${API_URL}/api/auth/password`, { method: 'PATCH', headers: h(), body: JSON.stringify(body) }));
   },
+  verifyEmail: async (token) => {
+    const data = await r(await fetch(`${API_URL}/api/auth/verify-email?token=${encodeURIComponent(token)}`, { method: 'GET', headers: h(false) }));
+    return data;
+  },
   logout: () => removeToken(),
   isAuthenticated: () => !!getToken()
 };

@@ -14,6 +14,8 @@ import MotDePasseOublie from './pages/MotDePasseOublie';
 import VerificationOTP from './pages/VerificationOTP';
 import FAQ from './pages/FAQ';
 import './index.css';
+import FormulaireIntelligent from './pages/FormulaireIntelligent';
+import VerifyEmail from './pages/VerifyEmail';
 
 //nothing
 function App() {
@@ -30,10 +32,12 @@ function App() {
         <Route path="/inscription-client" element={<><Navbar /><InscriptionClient /><Footer /></>} />
         <Route path="/services/:serviceId" element={<><Navbar /><ServiceDetail /><Footer /></>} />
         <Route path="/faq" element={<><Navbar /><FAQ /><Footer /></>} />
+        <Route path="/demander-estimation" element={<><Navbar /><FormulaireIntelligent /><Footer /></>} />
 
         {/* AUTH */}
         <Route path="/mot-de-passe-oublie" element={<><Navbar /><MotDePasseOublie /><Footer /></>} />
         <Route path="/verification" element={<><Navbar /><VerificationOTP /><Footer /></>} />
+        <Route path="/verify-email" element={<><Navbar /><VerifyEmail /><Footer /></>} />
 
         {/* DASHBOARDS */}
         <Route path="/dashboard-pro" element={<DashboardPro />} />
