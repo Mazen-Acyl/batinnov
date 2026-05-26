@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Home.css';
 
 function Home() {
+  const navigate = useNavigate();
   const services = [
     {
       id: 'renovation',
@@ -76,16 +77,12 @@ function Home() {
                 Trouvez le bon artisan pour tous vos travaux du bâtiment.
                 Rénovation, aménagement, adaptation PMR ou borne électrique.
               </p>
-              <a
-                href="#services-section"
+              <button
                 className="btn-hero"
-                onClick={e => {
-                  e.preventDefault();
-                  document.getElementById('services-section')?.scrollIntoView({ behavior: 'smooth' });
-                }}
+                onClick={() => navigate('/devis')}
               >
                 Demander un devis gratuit
-              </a>
+              </button>
             </div>
             <div className="hero-image">
               <img src="/images/hero.jpg" alt="Artisan BATINNOV" />
@@ -127,16 +124,24 @@ function Home() {
           <h2>Nos services à domicile</h2>
           <div className="services-grid">
             {services.map((service) => (
-              <Link to={service.link} key={service.id} className="service-card">
-                <div className="service-image-wrap">
-                  <img src={service.image} alt={service.title} />
-                </div>
-                <div className="service-card-body">
-                  <h3 style={{ color: service.color }}>{service.title}</h3>
-                  <p>{service.desc}</p>
-                  <span className="service-card-link" style={{ color: service.color }}>Demander un devis →</span>
-                </div>
-              </Link>
+              <div key={service.id} className="service-card">
+                <Link to={service.link} className="service-card-inner">
+                  <div className="service-image-wrap">
+                    <img src={service.image} alt={service.title} />
+                  </div>
+                  <div className="service-card-body">
+                    <h3 style={{ color: service.color }}>{service.title}</h3>
+                    <p>{service.desc}</p>
+                  </div>
+                </Link>
+                <button
+                  className="service-card-devis-btn"
+                  style={{ borderColor: service.color, color: service.color }}
+                  onClick={() => navigate(`/devis?service=${service.id}`)}
+                >
+                  Demander un devis →
+                </button>
+              </div>
             ))}
           </div>
         </div>

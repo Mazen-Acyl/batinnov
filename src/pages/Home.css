@@ -36,9 +36,12 @@
   padding: 16px 32px;
   background: var(--primary);
   color: var(--white);
+  border: none;
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
   transition: all 0.2s;
 }
 
@@ -279,15 +282,22 @@
   transition: transform 0.25s, box-shadow 0.25s;
   display: flex;
   flex-direction: column;
-  cursor: pointer;
   border: 1px solid #EAECF0;
-  text-decoration: none;
 }
 
 .service-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.09);
   border-color: transparent;
+}
+
+.service-card-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 }
 
 .service-image-wrap {
@@ -642,19 +652,21 @@
   line-height: 1.55;
 }
 
-.service-card-link {
+.service-card-devis-btn {
+  display: block;
+  width: 100%;
+  padding: 11px 20px;
+  background: transparent;
+  border: none;
+  border-top: 1px solid #F3F4F6;
   font-size: 13px;
   font-weight: 700;
   font-family: var(--font-display);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: gap 0.2s;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
 }
-
-.service-card:hover .service-card-link {
-  gap: 8px;
-}
+.service-card-devis-btn:hover { background: #F9FAFB; }
 
 /* ÉTOILES AVIS */
 .avis-stars {

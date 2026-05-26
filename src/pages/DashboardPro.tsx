@@ -3,6 +3,49 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import './DashboardPro.css';
 
+// ─── Notifications Pro ────────────────────────────────────────────────────────
+type ProNotifType = 'message' | 'job_update' | 'quote_request' | 'payment' | 'review';
+
+const NOTIF_PRO_CONFIG: Record<ProNotifType, { label: string; color: string; soft: string; icon: React.ReactNode }> = {
+  message:       { label: 'Message',       color: '#E87D50', soft: '#FFF5F0', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
+  job_update:    { label: 'Chantier',      color: '#8B5CF6', soft: '#F5F3FF', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
+  quote_request: { label: 'Nouveau lead',  color: '#3B82F6', soft: '#EFF6FF', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+  payment:       { label: 'Paiement',      color: '#10B981', soft: '#ECFDF5', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> },
+  review:        { label: 'Avis reçu',     color: '#EC4899', soft: '#FDF2F8', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> },
+};
+
+const NOTIF_FILTERS_PRO = [
+  { id: 'toutes',        label: 'Toutes' },
+  { id: 'unread',        label: 'Non lues' },
+  { id: 'quote_request', label: 'Leads' },
+  { id: 'message',       label: 'Messages' },
+  { id: 'job_update',    label: 'Chantiers' },
+  { id: 'payment',       label: 'Paiements' },
+  { id: 'review',        label: 'Avis' },
+];
+
+const initProNotifs: { id: string; type: ProNotifType; title: string; body: string; createdAt: string; read: boolean }[] = [
+  { id: 'p1', type: 'quote_request', title: 'Nouveau lead — Wallbox 11kW Chamalières', body: "Antoine B. recherche un électricien IRVE. Budget estimé : 1 600 €. Répondez rapidement !", createdAt: new Date(Date.now() - 2*60000).toISOString(),       read: false },
+  { id: 'p2', type: 'message',       title: 'Message de Marie L.',                     body: "Bonjour, est-ce que vous pouvez venir mercredi matin ? La porte sera ouverte à 8h30.",  createdAt: new Date(Date.now() - 30*60000).toISOString(),      read: false },
+  { id: 'p3', type: 'payment',       title: 'Paiement reçu — 1 200 €',                 body: "Le paiement de Pierre R. pour la facture F-2026-005 a été validé.",                     createdAt: new Date(Date.now() - 3*3600000).toISOString(),     read: false },
+  { id: 'p4', type: 'job_update',    title: 'Chantier #P2 — statut mis à jour',        body: "Le chantier de Thomas D. (Wallbox 11kW Riom) a été marqué En cours.",                  createdAt: new Date(Date.now() - 24*3600000).toISOString(),    read: true  },
+  { id: 'p5', type: 'review',        title: 'Nouvel avis 5★ de Pierre R.',             body: "\"Très professionnel, installation rapide et soignée. Je recommande vivement !\"",      createdAt: new Date(Date.now() - 2*24*3600000).toISOString(),  read: true  },
+];
+
+function proFormatRelative(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMin = Math.floor((now.getTime() - d.getTime()) / 60000);
+  if (diffMin < 1) return "À l'instant";
+  if (diffMin < 60) return `Il y a ${diffMin} min`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `Il y a ${diffH}h`;
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return 'Hier';
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
 function DashboardPro() {
   const [activePage, setActivePage] = useState('dashboard');
   const { logout } = useAuth();
@@ -63,6 +106,30 @@ function DashboardPro() {
     { id: 3, client: 'Robert V.', service: 'Rénovation électrique', adresse: 'Riom (63)', budget: '800 €', date: 'Hier', urgent: false, repondu: false }
   ]);
 
+  // ── Agenda Pro ──
+  interface RdvPro { id: number; client: string; service: string; dateStr: string; dayIdx: number; heure: string; duree: string; statut: 'confirme' | 'a_confirmer' | 'refuse'; avatar: string; }
+  const [agendaRdv, setAgendaRdv] = useState<RdvPro[]>([
+    { id: 1, client: 'Marie L.',   service: 'Mise en service borne',     dateStr: 'Lun. 19 mai', dayIdx: 0, heure: '09:00', duree: '2h',   statut: 'confirme',   avatar: 'ML' },
+    { id: 2, client: 'Thomas D.',  service: 'Visite technique Wallbox',  dateStr: 'Mar. 20 mai', dayIdx: 1, heure: '14:00', duree: '1h30', statut: 'confirme',   avatar: 'TD' },
+    { id: 3, client: 'Nadia F.',   service: 'Diagnostic électrique',     dateStr: 'Mar. 20 mai', dayIdx: 1, heure: '11:00', duree: '1h',   statut: 'a_confirmer',avatar: 'NF' },
+    { id: 4, client: 'Sophie M.',  service: 'Démarrage rénovation SDB',  dateStr: 'Jeu. 22 mai', dayIdx: 3, heure: '08:00', duree: '3h',   statut: 'confirme',   avatar: 'SM' },
+    { id: 5, client: 'Pierre R.',  service: 'Vérification installation', dateStr: 'Ven. 23 mai', dayIdx: 4, heure: '16:00', duree: '1h',   statut: 'a_confirmer',avatar: 'PR' },
+    { id: 6, client: 'Antoine B.', service: 'Installation Wallbox 11kW', dateStr: 'Sam. 24 mai', dayIdx: 5, heure: '09:00', duree: '4h',   statut: 'confirme',   avatar: 'AB' },
+  ]);
+  const [agendaDay, setAgendaDay] = useState(0);
+  const WEEK_DAYS = ['Lun. 19/05','Mar. 20/05','Mer. 21/05','Jeu. 22/05','Ven. 23/05','Sam. 24/05'];
+  const handleConfirmRdv = (id: number) => {
+    setAgendaRdv(prev => prev.map(r => r.id === id ? { ...r, statut: 'confirme' } : r));
+    showNotif('RDV confirmé ✓');
+  };
+  const handleRefuseRdv = (id: number) => {
+    setAgendaRdv(prev => prev.map(r => r.id === id ? { ...r, statut: 'refuse' } : r));
+    showNotif('RDV refusé', 'error');
+  };
+
+  // ── Chantier detail ──
+  const [selectedChantier, setSelectedChantier] = useState<number | null>(null);
+
   const [docs, setDocs] = useState([
     { id: 1, name: 'K-bis', statut: 'valide', date: '01/01/2026', ok: true },
     { id: 2, name: 'Assurance décennale', statut: 'valide', date: '01/01/2026', ok: true },
@@ -106,6 +173,15 @@ function DashboardPro() {
   const [draft, setDraft] = useState('');
   const [convSearch, setConvSearch] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleDraftChange = (val: string) => {
+    setDraft(val);
+    if (!isTyping) setIsTyping(true);
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(() => setIsTyping(false), 2000);
+  };
 
   const sendMessage = () => {
     if (!draft.trim() || selectedConv === null) return;
@@ -117,6 +193,8 @@ function DashboardPro() {
         : c
     ));
     setDraft('');
+    setIsTyping(false);
+    if (typingTimer.current) clearTimeout(typingTimer.current);
   };
 
   useEffect(() => {
@@ -167,6 +245,14 @@ function DashboardPro() {
     showNotif('Profil sauvegardé avec succès ✓');
   };
 
+  /* ── Notifications Pro ── */
+  const [proNotifications, setProNotifications] = useState(initProNotifs);
+  const [proNotifFilter, setProNotifFilter] = useState('toutes');
+  const handleMarkProNotifRead = (id: string) =>
+    setProNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  const handleMarkAllProRead = () =>
+    setProNotifications(prev => prev.map(n => ({ ...n, read: true })));
+
   const statutConfig = {
     en_cours: { label: 'En cours', color: '#E87D50', bg: '#FFF5F0' },
     planifie: { label: 'Planifié', color: '#6366F1', bg: '#F0F0FF' },
@@ -175,22 +261,32 @@ function DashboardPro() {
 
   const leadsActifs = leads.filter(l => !l.repondu);
 
+  const filteredProNotifs = proNotifFilter === 'toutes'
+    ? proNotifications
+    : proNotifFilter === 'unread'
+      ? proNotifications.filter(n => !n.read)
+      : proNotifications.filter(n => n.type === (proNotifFilter as ProNotifType));
+
+  const rdvPending = agendaRdv.filter(r => r.statut === 'a_confirmer').length;
+
   const navItems = [
-    { id: 'dashboard', label: 'Tableau de bord' },
-    { id: 'leads', label: 'Leads', badge: leadsActifs.length },
-    { id: 'chantiers', label: 'Chantiers' },
-    { id: 'messages', label: 'Messages', badge: conversations.filter(c => !c.lu).length },
-    { id: 'documents', label: 'Documents' },
+    { id: 'dashboard',   label: 'Tableau de bord' },
+    { id: 'leads',       label: 'Leads',     badge: leadsActifs.length },
+    { id: 'chantiers',   label: 'Chantiers' },
+    { id: 'agenda',      label: 'Agenda',    badge: rdvPending },
+    { id: 'messages',    label: 'Messages',  badge: conversations.filter(c => !c.lu).length },
+    { id: 'documents',   label: 'Documents' },
     { id: 'facturation', label: 'Facturation' },
   ];
 
   const pageTitle = {
-    dashboard: 'Tableau de bord',
-    leads: 'Mes leads',
-    chantiers: 'Mes chantiers',
-    messages: 'Messages',
-    profil: 'Mon profil',
-    documents: 'Documents',
+    dashboard:   'Tableau de bord',
+    leads:       'Mes leads',
+    chantiers:   'Mes chantiers',
+    agenda:      'Agenda',
+    messages:    'Messages',
+    profil:      'Mon profil',
+    documents:   'Documents',
     facturation: 'Facturation'
   }[activePage] || '';
 
@@ -222,33 +318,15 @@ function DashboardPro() {
           <div className="dp-navbar-right">
             <Link to="/" className="dp-client-link">Voir site client</Link>
 
-            <div className="dp-notif" style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setNotifPanelOpen(o => !o)}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <button className="dp-notif-bell" onClick={() => setActivePage('notifications')} title="Notifications">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
               </svg>
-              {leadsActifs.length > 0 && <span className="dp-notif-dot" />}
-              {notifPanelOpen && (
-                <div style={{
-                  position: 'absolute', top: 32, right: 0, background: '#fff',
-                  border: '1px solid #E5E7EB', borderRadius: 10, width: 260,
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.10)', zIndex: 200, padding: '8px 0'
-                }}>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: '#9CA3AF', padding: '4px 16px 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Notifications
-                  </p>
-                  {leadsActifs.length > 0
-                    ? leadsActifs.map(l => (
-                      <div key={l.id} style={{ padding: '8px 16px', fontSize: 13, borderTop: '1px solid #F3F4F6' }}>
-                        <strong>{l.client}</strong> — {l.service}
-                        <p style={{ color: '#9CA3AF', margin: '2px 0 0', fontSize: 12 }}>{l.date}</p>
-                      </div>
-                    ))
-                    : <p style={{ padding: '8px 16px', fontSize: 13, color: '#9CA3AF' }}>Aucune nouvelle notification</p>
-                  }
-                </div>
+              {proNotifications.filter(n => !n.read).length > 0 && (
+                <span className="dp-notif-badge">{proNotifications.filter(n => !n.read).length}</span>
               )}
-            </div>
+            </button>
 
             <button className="dp-avatar-btn" onClick={() => setActivePage('profil')}>
               <div className="dp-avatar">{pro.avatar}</div>
@@ -417,41 +495,246 @@ function DashboardPro() {
           {/* ── CHANTIERS ── */}
           {activePage === 'chantiers' && (
             <div className="dp-page">
-              <div className="dp-chantiers-list">
-                {chantiers.map(c => {
-                  const pct = c.steps.length <= 1 ? 100 : Math.round((c.currentStep / (c.steps.length - 1)) * 100);
-                  return (
-                    <div key={c.id} className="dp-chantier-card">
-                      <div className="dp-chantier-top">
-                        <span className="dp-chantier-ref">{c.service} · {c.ref}</span>
-                        <span className="dp-tag" style={{ color: statutConfig[c.statut].color, background: statutConfig[c.statut].bg }}>
-                          {statutConfig[c.statut].label}
-                        </span>
+              {selectedChantier === null ? (
+                <>
+                  <div className="dp-page-head">
+                    <h1>Mes chantiers</h1>
+                    <span className="dp-page-head-sub">{chantiers.filter(c => c.statut === 'en_cours').length} en cours · {chantiers.filter(c => c.statut === 'planifie').length} planifiés</span>
+                  </div>
+                  <div className="dp-chantiers-list">
+                    {chantiers.map(c => {
+                      const pct = c.steps.length <= 1 ? 100 : Math.round((c.currentStep / (c.steps.length - 1)) * 100);
+                      return (
+                        <div key={c.id} className="dp-chantier-card" onClick={() => setSelectedChantier(c.id)} style={{ cursor: 'pointer' }}>
+                          <div className="dp-chantier-top">
+                            <span className="dp-chantier-ref">{c.service} · {c.ref}</span>
+                            <span className="dp-tag" style={{ color: statutConfig[c.statut].color, background: statutConfig[c.statut].bg }}>
+                              {statutConfig[c.statut].label}
+                            </span>
+                          </div>
+                          <h3 className="dp-chantier-titre">{c.titre}</h3>
+                          <p className="dp-chantier-meta">{c.client} · {c.adresse}</p>
+                          <div className="dp-chantier-bar-track">
+                            <div className="dp-chantier-bar-fill" style={{ width: `${pct}%`, background: statutConfig[c.statut].color }} />
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+                            <span style={{ fontSize: 12, color: '#6B7280' }}>
+                              Étape {c.currentStep + 1}/{c.steps.length} : <strong>{c.steps[c.currentStep]}</strong>
+                            </span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: statutConfig[c.statut].color }}>{pct}%</span>
+                          </div>
+                          <div className="dp-chantier-footer">
+                            <span>Client : <strong>{c.client}</strong></span>
+                            <span>{c.montant} · <span style={{ color: '#9CA3AF' }}>{c.date}</span></span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (() => {
+                const c = chantiers.find(x => x.id === selectedChantier);
+                if (!c) return null;
+                const pct = c.steps.length <= 1 ? 100 : Math.round((c.currentStep / (c.steps.length - 1)) * 100);
+                return (
+                  <div className="pro-job-detail">
+                    <button className="dp-back-btn" onClick={() => setSelectedChantier(null)}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                      Retour aux chantiers
+                    </button>
+
+                    {/* Hero */}
+                    <div className="pro-job-hero">
+                      <div className="pro-job-hero-info">
+                        <span className="pro-job-ref">{c.service} · {c.ref}</span>
+                        <h2>{c.titre}</h2>
+                        <p>{c.client} · {c.adresse} · {c.date}</p>
                       </div>
-                      <h3 className="dp-chantier-titre">{c.titre}</h3>
-                      <p className="dp-chantier-meta">{c.client} · {c.adresse}</p>
-                      <div className="dp-chantier-bar-track">
-                        <div className="dp-chantier-bar-fill" style={{ width: `${pct}%`, background: statutConfig[c.statut].color }} />
-                      </div>
-                      <div className="dp-chantier-steps-row">
-                        {c.steps.map((step, i) => (
-                          <button
-                            key={i}
-                            className={`dp-chantier-step ${i <= c.currentStep ? 'done' : ''}`}
-                            onClick={() => handleUpdateStep(c.id, i)}
-                            title={`Marquer jusqu'à "${step}"`}
-                          >
-                            {step}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="dp-chantier-footer">
-                        <span>Client : <strong>{c.client}</strong></span>
-                        <span>{c.montant}</span>
+                      <div className="pro-job-hero-pct" style={{ color: statutConfig[c.statut].color }}>
+                        <span>{pct}%</span>
+                        <div className="pro-job-hero-bar"><div style={{ width: `${pct}%`, background: statutConfig[c.statut].color }} /></div>
+                        <small>{statutConfig[c.statut].label}</small>
                       </div>
                     </div>
+
+                    {/* Phases verticales */}
+                    <div className="pro-job-section-title">Phases du chantier</div>
+                    <div className="pro-job-phases">
+                      {c.steps.map((step, i) => {
+                        const done    = i < c.currentStep;
+                        const current = i === c.currentStep;
+                        const color   = done ? '#22C55E' : current ? '#E87D50' : '#9CA3AF';
+                        return (
+                          <div key={i} className="pro-job-phase-row">
+                            {/* Ligne verticale */}
+                            <div className="pro-job-phase-connector">
+                              <div className="pro-job-phase-dot" style={{ background: color, borderColor: color }}>
+                                {done && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                                {current && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff' }} />}
+                              </div>
+                              {i < c.steps.length - 1 && <div className="pro-job-phase-line" style={{ background: done ? '#22C55E30' : '#E5E7EB' }} />}
+                            </div>
+                            {/* Contenu */}
+                            <div className={`pro-job-phase-card ${done ? 'done' : current ? 'current' : ''}`}>
+                              <div className="pro-job-phase-card-top">
+                                <div>
+                                  <span className="pro-job-phase-num" style={{ color }}>Étape {i + 1}</span>
+                                  <strong className="pro-job-phase-label">{step}</strong>
+                                </div>
+                                <span className="dp-tag" style={{ color, background: color + '18', fontSize: 11 }}>
+                                  {done ? 'Terminé' : current ? 'En cours' : 'À faire'}
+                                </span>
+                              </div>
+                              {current && (
+                                <div className="pro-job-phase-actions">
+                                  <button className="pro-job-photo-btn" onClick={() => showNotif('Ajout photo — bientôt disponible')}>
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                    Ajouter une photo
+                                  </button>
+                                  {i < c.steps.length - 1 && (
+                                    <button className="pro-job-next-btn" onClick={() => { handleUpdateStep(c.id, i + 1); }}>
+                                      Valider et passer à : <strong>{c.steps[i + 1]}</strong> →
+                                    </button>
+                                  )}
+                                  {i === c.steps.length - 1 && (
+                                    <button className="pro-job-next-btn" style={{ background: '#22C55E' }} onClick={() => { handleUpdateStep(c.id, i); setSelectedChantier(null); }}>
+                                      ✓ Marquer le chantier comme terminé
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                              {!done && !current && (
+                                <p className="pro-job-phase-todo">Cette étape démarrera après la validation de l'étape précédente.</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Photos */}
+                    <div className="pro-job-section-title" style={{ marginTop: 24 }}>Photos du chantier</div>
+                    <div className="pro-job-photos-grid">
+                      {[...Array(4)].map((_, i) => (
+                        <button key={i} className="pro-job-photo-tile" onClick={() => showNotif('Galerie photos — bientôt disponible')}>
+                          <div className="pro-job-photo-tile-inner" style={{ background: `linear-gradient(140deg, ${['#1B5E41','#2E7D55','#C45A28','#9D3F1F'][i]} 0%, #0a1a12 100%)` }}>
+                            {i === 3 ? (
+                              <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 700 }}>+ Ajouter</span>
+                            ) : (
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            )}
+                          </div>
+                          <span className="pro-job-photo-label">{['Avant','Phase 1','Phase 2','Ajouter'][i]}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Actions bas */}
+                    <div className="pro-job-bottom-actions">
+                      <button className="pro-job-msg-btn" onClick={() => { setSelectedChantier(null); setActivePage('messages'); }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        Contacter le client
+                      </button>
+                      <button className="pro-job-rdv-btn" onClick={() => { setSelectedChantier(null); setActivePage('agenda'); }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        Voir l'agenda
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* ── AGENDA PRO ── */}
+          {activePage === 'agenda' && (
+            <div className="dp-page">
+              <div className="dp-page-head">
+                <h1>Agenda</h1>
+                <div style={{ display: 'flex', gap: 16, fontSize: 13, color: '#6B7280' }}>
+                  <span><strong style={{ color: '#111827' }}>{agendaRdv.filter(r => r.statut === 'confirme').length}</strong> confirmés</span>
+                  <span><strong style={{ color: '#E87D50' }}>{rdvPending}</strong> en attente</span>
+                </div>
+              </div>
+
+              {/* Semaine */}
+              <div className="pro-agenda-week">
+                {WEEK_DAYS.map((day, i) => {
+                  const events = agendaRdv.filter(r => r.dayIdx === i && r.statut !== 'refuse');
+                  return (
+                    <button key={i} className={`pro-agenda-day-btn ${agendaDay === i ? 'selected' : ''}`} onClick={() => setAgendaDay(i)}>
+                      <span className="pro-agenda-day-name">{day.split(' ')[0]}</span>
+                      <span className="pro-agenda-day-date">{day.split(' ')[1]}</span>
+                      {events.length > 0 && (
+                        <div className="pro-agenda-day-dots">
+                          {events.slice(0, 3).map((e, j) => (
+                            <span key={j} className="pro-agenda-day-dot" style={{ background: e.statut === 'a_confirmer' ? '#E87D50' : '#22C55E' }} />
+                          ))}
+                        </div>
+                      )}
+                    </button>
                   );
                 })}
+              </div>
+
+              {/* RDV à confirmer */}
+              {rdvPending > 0 && (
+                <div className="pro-agenda-pending-section">
+                  <div className="pro-agenda-pending-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E87D50" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    {rdvPending} demande{rdvPending > 1 ? 's' : ''} de RDV en attente de confirmation
+                  </div>
+                  {agendaRdv.filter(r => r.statut === 'a_confirmer').map(rdv => (
+                    <div key={rdv.id} className="pro-agenda-pending-card">
+                      <div className="pro-agenda-rdv-avatar">{rdv.avatar}</div>
+                      <div className="pro-agenda-rdv-info">
+                        <strong>{rdv.client}</strong>
+                        <span>{rdv.service}</span>
+                        <span style={{ color: '#E87D50', fontWeight: 600 }}>{rdv.dateStr} · {rdv.heure} · {rdv.duree}</span>
+                      </div>
+                      <div className="pro-agenda-rdv-actions">
+                        <button className="pro-agenda-confirm-btn" onClick={() => handleConfirmRdv(rdv.id)}>✓ Confirmer</button>
+                        <button className="pro-agenda-refuse-btn" onClick={() => handleRefuseRdv(rdv.id)}>✕</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Timeline du jour sélectionné */}
+              <div className="pro-agenda-day-section">
+                <div className="pro-agenda-day-title">{WEEK_DAYS[agendaDay]}</div>
+                {agendaRdv.filter(r => r.dayIdx === agendaDay && r.statut !== 'refuse').length === 0 ? (
+                  <div className="notif-empty" style={{ marginTop: 16 }}>
+                    <div className="notif-empty-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                    <strong>Journée libre</strong>
+                    <span>Aucun RDV prévu ce jour</span>
+                  </div>
+                ) : (
+                  <div className="pro-agenda-timeline">
+                    {agendaRdv.filter(r => r.dayIdx === agendaDay && r.statut !== 'refuse').sort((a,b) => a.heure.localeCompare(b.heure)).map(rdv => (
+                      <div key={rdv.id} className={`pro-agenda-event ${rdv.statut === 'a_confirmer' ? 'pending' : 'confirmed'}`}>
+                        <div className="pro-agenda-event-time">
+                          <strong>{rdv.heure}</strong>
+                          <small>{rdv.duree}</small>
+                        </div>
+                        <div className="pro-agenda-event-bar" style={{ background: rdv.statut === 'a_confirmer' ? '#E87D50' : '#22C55E' }} />
+                        <div className="pro-agenda-event-info">
+                          <div className="pro-agenda-rdv-avatar" style={{ width: 28, height: 28, fontSize: 10 }}>{rdv.avatar}</div>
+                          <div>
+                            <strong>{rdv.client}</strong>
+                            <span>{rdv.service}</span>
+                          </div>
+                          <span className="dp-tag" style={{ marginLeft: 'auto', color: rdv.statut === 'a_confirmer' ? '#E87D50' : '#22C55E', background: rdv.statut === 'a_confirmer' ? '#FFF5F0' : '#F0FDF4', fontSize: 11 }}>
+                            {rdv.statut === 'a_confirmer' ? 'À confirmer' : 'Confirmé'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -534,9 +817,11 @@ function DashboardPro() {
                       <div className="chat-messages">
                         {(() => {
                           let lastDate = '';
-                          return convActive.messages.map(msg => {
+                          const msgs = convActive.messages;
+                          return msgs.map((msg, idx) => {
                             const showDate = msg.date !== lastDate;
                             lastDate = msg.date;
+                            const isLastSent = msg.de === 'moi' && idx === msgs.length - 1;
                             return (
                               <div key={msg.id}>
                                 {showDate && (
@@ -554,11 +839,20 @@ function DashboardPro() {
                                       )}
                                     </span>
                                   </div>
+                                  {isLastSent && <span className="chat-read-receipt">Lu ✓</span>}
                                 </div>
                               </div>
                             );
                           });
                         })()}
+                        {isTyping && (
+                          <div className="chat-bubble-wrap eux">
+                            <div className="chat-bubble chat-typing-bubble">
+                              <span className="chat-typing-dot" /><span className="chat-typing-dot" /><span className="chat-typing-dot" />
+                            </div>
+                            <span className="chat-typing-label">{convActive.nom} est en train d'écrire…</span>
+                          </div>
+                        )}
                         <div ref={messagesEndRef} />
                       </div>
 
@@ -575,7 +869,7 @@ function DashboardPro() {
                           type="text"
                           placeholder={`Message à ${convActive.nom}...`}
                           value={draft}
-                          onChange={e => setDraft(e.target.value)}
+                          onChange={e => handleDraftChange(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && sendMessage()}
                         />
                         <button className="chat-send-btn" onClick={sendMessage} disabled={!draft.trim()}>
@@ -655,6 +949,74 @@ function DashboardPro() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── NOTIFICATIONS ── */}
+          {activePage === 'notifications' && (
+            <div className="dp-page">
+              <div className="notif-header-row">
+                <h1 style={{ fontSize: 24, fontWeight: 900, color: '#111827', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  Notifications
+                  {proNotifications.filter(n => !n.read).length > 0 && (
+                    <span className="notif-header-badge">{proNotifications.filter(n => !n.read).length} non lues</span>
+                  )}
+                </h1>
+                {proNotifications.filter(n => !n.read).length > 0 && (
+                  <button className="notif-mark-all-btn" style={{ background: '#FFF3EE', color: '#E87D50' }} onClick={handleMarkAllProRead}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Tout marquer comme lu
+                  </button>
+                )}
+              </div>
+
+              <div className="notif-filters">
+                {NOTIF_FILTERS_PRO.map(f => {
+                  const count = f.id === 'toutes' ? proNotifications.length
+                    : f.id === 'unread' ? proNotifications.filter(n => !n.read).length
+                    : proNotifications.filter(n => n.type === f.id).length;
+                  return (
+                    <button key={f.id} className={`notif-pill pro ${proNotifFilter === f.id ? 'active' : ''}`} onClick={() => setProNotifFilter(f.id)}>
+                      {f.label}
+                      <span className="notif-pill-count">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="notif-list">
+                {filteredProNotifs.length === 0 ? (
+                  <div className="notif-empty">
+                    <div className="notif-empty-icon">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="1.5" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    </div>
+                    <strong>Aucune notification</strong>
+                    <span>Vous êtes à jour. On vous tiendra au courant ici.</span>
+                  </div>
+                ) : (
+                  filteredProNotifs.map(n => {
+                    const cfg = NOTIF_PRO_CONFIG[n.type];
+                    return (
+                      <div key={n.id} className={`notif-card pro ${!n.read ? 'unread' : ''}`} onClick={() => handleMarkProNotifRead(n.id)}>
+                        <div className="notif-icon-box" style={{ background: cfg.soft, color: cfg.color }}>{cfg.icon}</div>
+                        <div className="notif-content">
+                          <div className="notif-top-row">
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <span className="notif-type-label" style={{ color: cfg.color }}>{cfg.label}</span>
+                              <strong className="notif-title">{n.title}</strong>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                              <span className="notif-time">{proFormatRelative(n.createdAt)}</span>
+                              {!n.read && <div className="notif-unread-dot" style={{ background: '#E87D50' }} />}
+                            </div>
+                          </div>
+                          <p className="notif-body">{n.body}</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           )}
