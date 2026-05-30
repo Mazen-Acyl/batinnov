@@ -5,10 +5,10 @@ import { useAuth } from '../hooks/useAuth';
 import './DemandeDevis.css';
 
 const SERVICES = [
-  { id: 'renovation',    label: 'Rénovation',        desc: 'Cuisine, salle de bain, extension, ravalement...' },
-  { id: 'amenagement',   label: 'Aménagement',        desc: 'Placards, dressings, bibliothèques, mezzanines...' },
-  { id: 'aide-personne', label: 'Aide à la personne', desc: 'Adaptation PMR, douches plain-pied, barres d\'appui...' },
-  { id: 'irve',          label: 'Borne IRVE',         desc: 'Installation borne de recharge électrique...' },
+  { id: 'renovation',    label: 'Travaux',                          desc: 'Rénovation, extension, isolation, ravalement...' },
+  { id: 'irve',          label: 'Borne IRVE',                       desc: 'Installation borne de recharge électrique...' },
+  { id: 'aide-personne', label: 'Aide à la personne',               desc: 'Adaptation PMR, douches plain-pied, petits travaux...' },
+  { id: 'courtage',      label: 'Assistance à maîtrise d\'ouvrage', desc: 'Pilotage, coordination et suivi de vos chantiers...' },
 ];
 
 function DemandeDevis() {

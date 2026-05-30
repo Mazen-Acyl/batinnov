@@ -20,27 +20,27 @@ function Navbar() {
   const services = [
     {
       id: 'renovation',
-      name: 'Rénovation',
-      description: 'Cuisine, salle de bain, extension, ravalement',
-      details: ['Rénovation cuisine', 'Rénovation salle de bain', 'Extension maison', 'Ravalement façade']
+      name: 'Travaux',
+      description: 'Rénovation, extension, ravalement, isolation',
+      details: ['Rénovation complète', 'Rénovation cuisine', 'Rénovation salle de bain', 'Extension maison', 'Isolation thermique', 'Peinture intérieure']
     },
     {
       id: 'courtage',
-      name: 'Courtage',
-      description: 'Financement, prêt travaux, rachat de crédit',
-      details: ['Prêt travaux', 'Rachat de crédit', 'Prêt à taux zéro (PTZ)', 'Simulation gratuite']
+      name: 'Assistance à maîtrise d\'ouvrage',
+      description: 'Pilotage, coordination et suivi de vos projets',
+      details: ['Pilotage de projet', 'Coordination artisans', 'Suivi de chantier', 'Réception des travaux']
     },
     {
       id: 'services-maison',
       name: 'Aide à la personne',
       description: 'Petits travaux, jardinage, adaptation PMR',
-      details: ['Petite peinture', 'Jardinage', 'Douche plain-pied PMR', 'Barres d\'appui']
+      details: ['Petite peinture', 'Jardinage', 'Douche plain-pied PMR', 'Barres d\'appui', 'Réparation ballon eau chaude']
     },
     {
       id: 'irve',
       name: 'Borne IRVE',
       description: 'Installation bornes de recharge électrique',
-      details: ['Wallbox 7kW', 'Wallbox 11kW', 'Wallbox 22kW', 'Crédit d\'impôt 500€']
+      details: ['Borne à domicile', 'Mise aux normes électriques', 'Borne copropriété', 'Étude / Diagnostic']
     }
   ];
 

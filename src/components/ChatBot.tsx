@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import './ChatBot.css';
 
 /* ── Types ── */
-type Action = { label: string; msg?: string; href?: string };
+type Action = { label: string; msg?: string; href?: string; page?: string };
 type Msg = {
   id: number;
   texte: string;
@@ -190,6 +190,46 @@ const GREETINGS = {
   admin:  "Bonjour ! Je suis l'assistant Admin BATINNOV.\nQue puis-je faire pour vous ?",
 };
 
+/* ── Ollama config ── */
+const AI_SERVER = 'http://127.0.0.1:8787';
+
+const PAGE_TO_ROUTE: Record<string, string> = {
+  contactSupport: '/devis',
+  helpCenter: '/dashboard-client',
+  messages: '/dashboard-client',
+  devis: '/devis',
+  demandes: '/dashboard-client',
+  chantiers: '/dashboard-client',
+  agenda: '/dashboard-client',
+  factures: '/dashboard-client',
+  proLeads: '/dashboard-pro',
+  proChantiers: '/dashboard-pro',
+  proAgenda: '/dashboard-pro',
+  adminDashboard: '/dashboard-admin',
+  adminSuivi: '/dashboard-admin',
+};
+
+async function callAIServer(payload: { role: string; message: string; history: { role: string; content: string }[]; context: object }): Promise<{ answer: string; actions: Action[]; sources: string[] } | null> {
+  try {
+    const res = await fetch(`${AI_SERVER}/chatbot/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const d = data?.data;
+    if (!d?.answer) return null;
+    const actions: Action[] = Array.isArray(d.actions)
+      ? d.actions.map((a: { label: string; page?: string }) => ({ label: a.label, page: a.page }))
+      : [];
+    return { answer: d.answer, actions, sources: Array.isArray(d.sources) ? d.sources : [] };
+  } catch {
+    return null;
+  }
+}
+
 function getReply(text: string, responses: Response[], defaultMsg: string): { reply: string; actions?: Action[]; sources?: string[] } {
   const lower = text.toLowerCase();
   for (const r of responses) {
@@ -237,8 +277,18 @@ export default function ChatBot() {
   ]);
   const [draft, setDraft] = useState('');
   const [typing, setTyping] = useState(false);
+  const [ollamaOk, setOllamaOk] = useState<boolean | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const historyRef = useRef<{ role: string; content: string }[]>([]);
+
+  /* Vérifier si le serveur Ollama est disponible */
+  useEffect(() => {
+    fetch(`${AI_SERVER}/health`, { signal: AbortSignal.timeout(2000) })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setOllamaOk(!!d?.ok))
+      .catch(() => setOllamaOk(false));
+  }, []);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -259,26 +309,46 @@ export default function ChatBot() {
     }
   }, [ctx]);
 
-  const send = (text: string) => {
+  const send = async (text: string) => {
     if (!text.trim() || typing) return;
-    setMsgs(prev => [...prev, { id: _id++, texte: text.trim(), de: 'user' }]);
+    const userText = text.trim();
+    setMsgs(prev => [...prev, { id: _id++, texte: userText, de: 'user' }]);
     setDraft('');
     setTyping(true);
-    setTimeout(() => {
-      const result = getReply(text, responses, DEFAULT_MSG[ctx]);
-      setTyping(false);
-      setMsgs(prev => [...prev, {
-        id: _id++,
-        texte: result.reply,
-        de: 'bot',
-        actions: result.actions,
-        sources: result.sources,
-      }]);
-    }, 800 + Math.random() * 400);
+    historyRef.current.push({ role: 'user', content: userText });
+
+    /* Essai Ollama — fallback mots-clés si indisponible */
+    const aiResult = await callAIServer({ role: ctx, message: userText, history: historyRef.current.slice(-8), context: { page: location.pathname } });
+
+    let texte: string;
+    let actions: Action[] | undefined;
+    let sources: string[] | undefined;
+
+    if (aiResult) {
+      setOllamaOk(true);
+      texte = aiResult.answer;
+      actions = aiResult.actions.length > 0 ? aiResult.actions : undefined;
+      sources = aiResult.sources.length > 0 ? aiResult.sources : undefined;
+    } else {
+      if (ollamaOk !== false) setOllamaOk(false);
+      const result = getReply(userText, responses, DEFAULT_MSG[ctx]);
+      texte = result.reply;
+      actions = result.actions;
+      sources = result.sources;
+    }
+
+    historyRef.current.push({ role: 'assistant', content: texte });
+    if (historyRef.current.length > 16) historyRef.current = historyRef.current.slice(-16);
+
+    setTyping(false);
+    setMsgs(prev => [...prev, { id: _id++, texte, de: 'bot', actions, sources }]);
   };
 
   const runAction = (action: Action) => {
-    if (action.href) {
+    if (action.page && PAGE_TO_ROUTE[action.page]) {
+      navigate(PAGE_TO_ROUTE[action.page]);
+      setOpen(false);
+    } else if (action.href) {
       navigate(action.href);
       setOpen(false);
     } else if (action.msg) {
@@ -302,8 +372,8 @@ export default function ChatBot() {
               <div>
                 <strong className="cb-header-title">Assistant Batinnov</strong>
                 <span className="cb-status">
-                  <span className="cb-dot" />
-                  {ctx === 'pro' ? 'Espace Pro' : ctx === 'admin' ? 'Espace Admin' : 'En ligne · ~1 min'}
+                  <span className="cb-dot" style={ollamaOk === true ? { background: '#4ade80' } : ollamaOk === false ? { background: '#f87171' } : {}} />
+                  {ollamaOk === true ? 'IA Ollama · actif' : ollamaOk === false ? (ctx === 'pro' ? 'Espace Pro' : ctx === 'admin' ? 'Espace Admin' : 'Mode standard') : 'Connexion…'}
                 </span>
               </div>
             </div>

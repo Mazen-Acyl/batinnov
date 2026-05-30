@@ -6,18 +6,18 @@ function Home() {
   const services = [
     {
       id: 'renovation',
-      title: 'Rénovation',
+      title: 'Travaux',
       color: '#E87D50',
       image: '/images/renovation.jpg',
-      desc: 'Cuisine, salle de bain, extension, ravalement...',
+      desc: 'Rénovation, extension, isolation, ravalement...',
       link: '/services/renovation'
     },
     {
       id: 'courtage',
-      title: 'Courtage',
+      title: 'Assistance à maîtrise d\'ouvrage',
       color: '#7C3AED',
       image: '/images/amenagement.jpg',
-      desc: 'Financement, prêt travaux, rachat de crédit...',
+      desc: 'Pilotage, coordination et suivi de projet...',
       link: '/services/courtage'
     },
     {
