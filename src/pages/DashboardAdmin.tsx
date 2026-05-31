@@ -537,24 +537,38 @@ export default function DashboardAdmin() {
     try {
       /* Utilisateurs : clients + prestataires — API retourne { data: [], total, ... } */
       const [clientsRaw, presRaw] = await Promise.allSettled([clientsAPI.getAll(), prestatairesAPI.getAll()]);
-      const clientsList = clientsRaw.status === 'fulfilled' && Array.isArray(clientsRaw.value) ? clientsRaw.value : [];
-      const presList    = presRaw.status === 'fulfilled' && Array.isArray(presRaw.value) ? presRaw.value : [];
+      // clientsAPI/prestatairesAPI.getAll() retourne data.data (tableau)
+      // Clients : email est jointé directement (pas dans utilisateur imbriqué)
+      // Prestataires : email est jointé directement
+      const clientsList = clientsRaw.status === 'fulfilled'
+        ? (Array.isArray(clientsRaw.value) ? clientsRaw.value : [])
+        : [];
+      const presList = presRaw.status === 'fulfilled'
+        ? (Array.isArray(presRaw.value) ? presRaw.value : [])
+        : [];
+
       const allUsers = [
         ...clientsList.map((c: any) => ({
-          id:         c.id, nom: `${c.prenom ?? ''} ${c.nom ?? ''}`.trim() || c.email,
-          email:      c.utilisateur?.email ?? c.email ?? '—',
+          id:         c.id,
+          nom:        `${c.prenom ?? ''} ${c.nom ?? ''}`.trim() || c.email || '—',
+          email:      c.email ?? '—',        // jointé directement, pas c.utilisateur.email
           phone:      c.telephone ?? '—',
-          role:       'client', ville: c.ville ?? '—',
+          role:       'client',
+          ville:      c.ville ?? '—',
           statut:     c.supprimeLe ? 'suspendu' : 'actif',
-          cree:       normalizeDate(c.creeLe), depense: '—', nbDemandes: 0,
+          cree:       normalizeDate(c.creeLe),
+          depense:    '—', nbDemandes: 0,
         })),
         ...presList.map((p: any) => ({
-          id:         p.id, nom: p.raisonSociale ?? `${p.prenom ?? ''} ${p.nom ?? ''}`.trim(),
-          email:      p.utilisateur?.email ?? p.email ?? '—',
+          id:         p.id,
+          nom:        p.raisonSociale ?? '—',
+          email:      p.email ?? '—',        // jointé directement
           phone:      p.telephone ?? '—',
-          role:       'pro', ville: p.ville ?? '—',
+          role:       'pro',
+          ville:      p.ville ?? '—',
           statut:     p.statut === 'valide' ? 'actif' : p.statut === 'suspendu' ? 'suspendu' : 'en_attente',
-          cree:       normalizeDate(p.creeLe), depense: '—', nbDemandes: 0,
+          cree:       normalizeDate(p.creeLe),
+          depense:    '—', nbDemandes: 0,
         })),
       ];
       setUtilisateurs(allUsers);
@@ -574,15 +588,17 @@ export default function DashboardAdmin() {
       try {
         const raw = await demandesAPI.list();
         const list = Array.isArray(raw) ? raw : [];
+        // Demandes liste : champs plats clientNom, clientPrenom, typePrestationLibelle
         setDemandes(list.map((d: any) => ({
-          id:          d.id, ref: d.id?.slice(0,8)?.toUpperCase() ?? 'DEM',
-          title:       d.typePrestation?.libelle ?? d.description?.slice(0,60) ?? 'Demande',
-          client:      `${d.client?.prenom ?? ''} ${d.client?.nom ?? ''}`.trim() || '—',
-          serviceType: mapDomaine(d.typePrestation?.domaine),
+          id:          d.id,
+          ref:         d.id?.slice(0,8)?.toUpperCase() ?? 'DEM',
+          title:       d.typePrestationLibelle ?? d.description?.slice(0,60) ?? 'Demande',
+          client:      `${d.clientPrenom ?? ''} ${d.clientNom ?? ''}`.trim() || '—',
+          serviceType: 'travaux' as const, // domaine non inclus dans la liste
           city:        d.villeIntervention ?? '—',
           stage:       mapDemandeStage(d.statut),
           createdAt:   normalizeDate(d.creeLe),
-          amount:      d.montantEstime ?? undefined,
+          amount:      undefined,
         })));
       } catch {}
 
@@ -590,15 +606,19 @@ export default function DashboardAdmin() {
       try {
         const raw = await devisAPI.getAll();
         const list = Array.isArray(raw) ? raw : [];
+        // Devis liste : clientNom, clientPrenom (pas de prestataire, pas de lignes)
+        // lignes uniquement sur GET /api/devis/:id (détail)
         setQuotes(list.map((q: any) => ({
-          id:        q.id, ref: q.numero ?? q.id?.slice(0,8)?.toUpperCase(),
-          title:     q.objet ?? 'Devis',
-          client:    `${q.client?.prenom ?? ''} ${q.client?.nom ?? ''}`.trim() || '—',
-          provider:  q.prestataire?.raisonSociale ?? '—',
-          serviceType: mapDomaine(q.typePrestation?.domaine ?? 'travaux'),
-          createdAt: normalizeDate(q.dateEmission), validUntil: normalizeDate(q.dateEmission),
-          status:    mapDevisStatus(q.statut),
-          items:     (q.lignes ?? []).map((l: any) => ({ id: l.id, label: l.designation, quantity: l.quantite, unitPrice: l.puHt, tvaRate: l.tauxTva })),
+          id:          q.id,
+          ref:         q.numero ?? q.id?.slice(0,8)?.toUpperCase() ?? 'DEV',
+          title:       q.objet ?? 'Devis',
+          client:      `${q.clientPrenom ?? ''} ${q.clientNom ?? ''}`.trim() || '—',
+          provider:    '—', // non inclus dans la liste
+          serviceType: 'travaux' as const,
+          createdAt:   normalizeDate(q.dateEmission),
+          validUntil:  normalizeDate(q.dateEmission),
+          status:      mapDevisStatus(q.statut),
+          items:       [],
         })));
       } catch {}
 
@@ -606,17 +626,18 @@ export default function DashboardAdmin() {
       try {
         const raw = await rendezVousAPI.list();
         const list = Array.isArray(raw) ? raw : [];
+        // Rendez-vous liste : clientId, prestataireId, adminId (IDs uniquement)
         setRdvList(list.map((r: any) => {
           const d = r.dateDebut ? new Date(r.dateDebut) : null;
           return {
             id:      r.id,
             titre:   r.notes ?? r.type ?? 'Rendez-vous',
-            client:  `${r.client?.prenom ?? ''} ${r.client?.nom ?? ''}`.trim() || '—',
-            pro:     r.prestataire?.raisonSociale ?? '—',
+            client:  '—', // clientId disponible mais nom non inclus
+            pro:     '—', // prestataireId disponible mais nom non inclus
             date:    d ? d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—',
             heure:   d ? d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
             adresse: r.lieu ?? '—',
-            tag:     r.statut === 'confirme' ? 'Validé' : 'À coordonner',
+            tag:     r.statut === 'confirme' || r.statut === 'realise' ? 'Validé' : 'À coordonner',
             statut:  r.statut === 'confirme' || r.statut === 'realise' ? 'valide' : 'a_coordonner',
           };
         }));
@@ -626,18 +647,20 @@ export default function DashboardAdmin() {
       try {
         const raw = await prestationsAPI.getAll();
         const list = Array.isArray(raw) ? raw : [];
+        // Prestations liste : uniquement ligneDevisId, prestataireId (IDs)
         setServices(list.map((p: any) => ({
           id:          p.id,
-          ref:         `${mapDomaine(p.ligneDevis?.typePrestation?.domaine)?.toUpperCase() ?? 'SRV'} · #${p.id?.slice(0,6)}`,
-          titre:       p.ligneDevis?.designation ?? 'Prestation',
-          client:      `${p.client?.prenom ?? ''} ${p.client?.nom ?? ''}`.trim() || '—',
-          pro:         p.prestataire?.raisonSociale ?? '—',
+          ref:         `SRV · #${p.id?.slice(0,6) ?? ''}`,
+          titre:       p.notesInternes ?? 'Prestation',
+          client:      '—',
+          pro:         '—',
           ville:       p.villeIntervention ?? '—',
           address:     `${p.adresseIntervention ?? ''}, ${p.codePostalIntervention ?? ''} ${p.villeIntervention ?? ''}`.trim(),
-          serviceType: mapDomaine(p.ligneDevis?.typePrestation?.domaine),
+          serviceType: 'travaux' as const,
           statut:      p.statut === 'terminee' ? 'livre' : p.statut === 'en_cours' ? 'en_cours' : p.statut === 'annulee' ? 'bloque' : 'a_demarrer',
           progress:    p.statut === 'terminee' ? 100 : p.statut === 'en_cours' ? 50 : 0,
-          nextStep:    '—', nextDate: normalizeDate(p.datePrevue),
+          nextStep:    '—',
+          nextDate:    normalizeDate(p.datePrevue),
           steps:       [], photos: [],
         })));
       } catch {}
@@ -646,11 +669,13 @@ export default function DashboardAdmin() {
       try {
         const raw = await paiementsAPI.getAll();
         const list = Array.isArray(raw) ? raw : [];
+        // Paiements : montant est une string décimale, pas de client imbriqué
         setAdminFactures(list.map((p: any) => ({
-          id:      p.id, ref: p.reference ?? `F${p.id?.slice(0,8)}`,
-          montant: normalizeMontant(p.montant),
-          client:  `${p.devis?.client?.prenom ?? ''} ${p.devis?.client?.nom ?? ''}`.trim() || '—',
-          pro:     p.devis?.prestataire?.raisonSociale ?? '—',
+          id:      p.id,
+          ref:     p.reference ?? `F${p.id?.slice(0,8) ?? ''}`,
+          montant: normalizeMontant(Number(p.montant ?? 0)),
+          client:  '—',
+          pro:     '—',
           statut:  p.statut === 'paye' ? 'paye' : p.statut === 'echoue' ? 'retard' : 'attente',
           date:    normalizeDate(p.datePaiement ?? p.creeLe),
         })));
@@ -660,14 +685,19 @@ export default function DashboardAdmin() {
       try {
         const raw = await prospectsAPI.getAll();
         const list = Array.isArray(raw) ? raw : [];
+        // Prospects : nom, prenom, email, telephone, statut, messageInitial, source
         setLeads(list.map((p: any) => ({
-          id:             p.id, name: `${p.prenom ?? ''} ${p.nom ?? ''}`.trim() || '—',
-          email:          p.email ?? '—', phone: p.telephone ?? '—',
+          id:             p.id,
+          name:           `${p.prenom ?? ''} ${p.nom ?? ''}`.trim() || '—',
+          email:          p.email ?? '—',
+          phone:          p.telephone ?? '—',
           source:         (p.source as LeadSource) ?? 'other',
           status:         mapProspectStatus(p.statut) as LeadStatus,
           priority:       'normal' as LeadPriority,
-          serviceType:    '—', city: '—',
-          createdAt:      normalizeDate(p.creeLe), notes: p.messageInitial ?? '',
+          serviceType:    '—',
+          city:           '—',
+          createdAt:      normalizeDate(p.creeLe),
+          notes:          p.messageInitial ?? p.notes ?? '',
           estimatedValue: 0,
         })));
       } catch {}

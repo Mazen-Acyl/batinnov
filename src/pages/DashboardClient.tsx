@@ -403,13 +403,13 @@ function DashboardClient() {
         const clientId = profil?.id;
         const demandesRaw = clientId ? await demandesAPI.listMine(clientId) : [];
         const adapted = (Array.isArray(demandesRaw) ? demandesRaw : []).map((d: any) => ({
-          id:             d.id,
-          service:        d.typePrestation?.libelle ?? d.typePrestation?.domaine ?? 'Service',
-          sousService:    d.description?.slice(0, 60) ?? '',
-          stage:          mapBackendStatusToStage(d.statut),
-          date:           normalizeDate(d.creeLe),
-          budget:         '—',
-          devis:          0,
+          id:          d.id,
+          service:     d.typePrestationLibelle ?? 'Service',
+          sousService: d.description?.slice(0, 60) ?? '',
+          stage:       mapBackendStatusToStage(d.statut),
+          date:        normalizeDate(d.creeLe),
+          budget:      '—',
+          devis:       0,
         }));
         setDemandes(adapted);
       } catch { /* laisse vide */ }
@@ -420,14 +420,16 @@ function DashboardClient() {
         const list = Array.isArray(devisRaw) ? devisRaw : [];
         setArtisans(list.map((d: any, i: number) => ({
           id:         d.id ?? i,
-          nom:        d.prestataire?.raisonSociale ?? `Artisan ${i+1}`,
-          metier:     d.demande?.typePrestation?.libelle ?? '—',
+          // La liste devis retourne clientNom/clientPrenom mais PAS le prestataire
+          // On affiche le numéro de devis comme identifiant
+          nom:        d.objet ?? `Devis ${d.numero ?? i+1}`,
+          metier:     '—',
           note:       0,
           avis:       0,
-          ville:      d.prestataire?.ville ?? '—',
-          avatar:     (d.prestataire?.raisonSociale ?? 'A')[0]?.toUpperCase() ?? 'A',
-          montant:    normalizeMontant(d.totalTtc ?? d.total_ttc ?? d.totalTTC),
-          montantNum: d.totalTtc ?? d.total_ttc ?? d.totalTTC ?? 0,
+          ville:      '—',
+          avatar:     (d.numero ?? 'D')[0]?.toUpperCase() ?? 'D',
+          montant:    normalizeMontant(Number(d.totalTtc ?? 0)),
+          montantNum: Number(d.totalTtc ?? 0),
           delai:      normalizeDate(d.dateEmission),
           accepte:    d.statut === 'accepte',
           experience: '—',
@@ -441,15 +443,15 @@ function DashboardClient() {
         const list = Array.isArray(paiementsRaw) ? paiementsRaw : [];
         setInvoices(list.map((p: any) => ({
           id:        p.id,
-          number:    p.reference ?? `PAY-${p.id?.slice(0,8)}`,
-          status:    mapPaymentStatus(p.statut ?? p.status),
-          label:     p.devis?.objet ?? p.label ?? 'Paiement',
-          issuedAt:  normalizeDate(p.datePaiement ?? p.date_paiement ?? p.creeLe),
-          amountHT:  p.montant ?? 0,
+          number:    p.reference ?? `PAY-${p.id?.slice(0,8) ?? ''}`,
+          status:    mapPaymentStatus(p.statut),
+          label:     'Paiement',
+          issuedAt:  normalizeDate(p.datePaiement ?? p.creeLe),
+          amountHT:  Number(p.montant ?? 0),
           tva:       20,
-          amountTTC: p.montant ?? 0,
+          amountTTC: Number(p.montant ?? 0),
           items:     [],
-          chantier:  p.devis?.demande?.typePrestation?.libelle ?? '—',
+          chantier:  '—',
         })));
       } catch { /* laisse vide */ }
 
@@ -458,13 +460,14 @@ function DashboardClient() {
         const rdvsRaw = await rendezVousAPI.list();
         const list = Array.isArray(rdvsRaw) ? rdvsRaw : [];
         setAgenda(list.map((r: any) => ({
-          id:      r.id,
-          heure:   r.dateDebut ? new Date(r.dateDebut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
-          date:    normalizeDate(r.dateDebut),
-          titre:   r.notes ?? r.type ?? 'Rendez-vous',
-          artisan: r.prestataire?.raisonSociale ?? r.admin?.prenom ?? '—',
-          duree:   r.dureeMinutes ? `${r.dureeMinutes}min` : '—',
-          statut:  r.statut ?? 'propose',
+          id:     r.id,
+          heure:  r.dateDebut ? new Date(r.dateDebut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
+          date:   normalizeDate(r.dateDebut),
+          titre:  r.notes ?? r.type ?? 'Rendez-vous',
+          artisan:'—', // la liste ne retourne que des IDs (prestataireId, adminId)
+          duree:  r.dureeMinutes ? `${r.dureeMinutes}min` : '—',
+          statut: r.statut ?? 'propose',
+          lieu:   r.lieu ?? '',
         })));
       } catch { /* laisse vide */ }
 
@@ -472,21 +475,17 @@ function DashboardClient() {
       try {
         const convsRaw = await conversationsAPI.list();
         const list = Array.isArray(convsRaw) ? convsRaw : [];
+        // La liste conversations ne retourne que clientId/prestataireId (pas d'objets imbriqués)
+        // On affiche le sujet et on charge les messages à la demande
         setConversations(list.map((c: any) => ({
-          id:     c.id,
-          nom:    c.prestataire?.raisonSociale ?? c.prestataire?.nom ?? 'Contact',
-          avatar: (c.prestataire?.raisonSociale ?? c.prestataire?.nom ?? 'C')[0]?.toUpperCase() ?? 'C',
-          lu:     !c.nonLus || c.nonLus === 0,
-          metier: c.prestation?.typePrestation?.libelle ?? '—',
-          note:   c.prestataire?.note ?? 0,
-          service: c.sujet ?? '—',
-          messages: (c.messages ?? c.dernierMessage ? [c.dernierMessage] : []).filter(Boolean).map((m: any) => ({
-            id:    m.id,
-            texte: m.contenu ?? '',
-            de:    m.expediteurId === me?.id ? 'moi' : 'eux',
-            heure: m.envoyeLe ? new Date(m.envoyeLe).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
-            date:  normalizeDate(m.envoyeLe),
-          })),
+          id:       c.id,
+          nom:      c.sujet ?? `Conversation ${c.id?.slice(0,8) ?? ''}`,
+          avatar:   (c.sujet ?? 'C')[0]?.toUpperCase() ?? 'C',
+          lu:       c.statut !== 'ouverte', // approximation : ouverte = non lu
+          metier:   '—',
+          note:     0,
+          service:  c.sujet ?? '—',
+          messages: [], // chargé séparément via /conversations/:id/messages
         })));
       } catch { /* laisse vide */ }
 
@@ -494,13 +493,14 @@ function DashboardClient() {
       try {
         const notifsRaw = await notificationsAPI.list();
         const list = Array.isArray(notifsRaw) ? notifsRaw : [];
+        // statut: 'en_attente'|'envoyee'|'lue'|'echec'|'annulee'
         setNotifications(list.map((n: any) => ({
           id:        n.id,
           type:      mapNotifType(n.type),
-          title:     n.titre ?? n.title ?? 'Notification',
-          body:      n.contenu ?? n.body ?? '',
-          createdAt: n.creeLe ?? n.created_at ?? new Date().toISOString(),
-          read:      !!(n.lueLe ?? n.read),
+          title:     n.titre ?? 'Notification',
+          body:      n.contenu ?? '',
+          createdAt: n.creeLe ?? new Date().toISOString(),
+          read:      n.statut === 'lue',
         })));
       } catch { /* laisse vide */ }
 

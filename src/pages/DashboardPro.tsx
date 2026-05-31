@@ -179,18 +179,20 @@ function DashboardPro() {
       try {
         const raw = await prestationsAPI.getAll();
         const list = Array.isArray(raw) ? raw : [];
+        // Prestations : la liste retourne uniquement ligneDevisId et prestataireId (IDs)
+        // pas d'objets imbriqués
         setChantiers(list.map((p: any) => ({
           id:          p.id,
           ref:         `#${p.id?.slice(0,6) ?? 'P'}`,
-          client:      p.client?.nom ?? p.client?.prenom ?? '—',
-          service:     p.ligneDevis?.typePrestation?.libelle ?? '—',
-          titre:       p.ligneDevis?.designation ?? 'Prestation',
-          adresse:     `${p.villeIntervention ?? ''} (${p.codePostalIntervention ?? ''})`,
+          client:      '—',
+          service:     '—',
+          titre:       p.notesInternes ?? 'Prestation',
+          adresse:     `${p.villeIntervention ?? ''}${p.codePostalIntervention ? ` (${p.codePostalIntervention})` : ''}`,
           date:        normalizeDate(p.datePrevue),
           statut:      p.statut === 'terminee' ? 'termine' : p.statut === 'en_cours' ? 'en_cours' : 'planifie',
-          montant:     normalizeMontant(p.ligneDevis?.montantHT),
+          montant:     '—',
           currentStep: p.statut === 'terminee' ? 3 : p.statut === 'en_cours' ? 1 : 0,
-          steps:       ['Visite', 'Intervention', 'Contrôle', 'Livraison'],
+          steps:       ['Planifiée', 'En cours', 'Contrôle', 'Terminée'],
         })));
         const enCours = list.filter((p: any) => p.statut === 'en_cours').length;
         setStats(prev => prev.map((s, i) => i === 0 ? { ...s, value: String(enCours) } : s));
@@ -200,15 +202,16 @@ function DashboardPro() {
       try {
         const raw = await demandesAPI.list({ statut: 'validee' });
         const list = Array.isArray(raw) ? raw : [];
+        // Demandes list retourne clientNom, clientPrenom, typePrestationLibelle (champs plats)
         setLeads(list.map((d: any) => ({
-          id:       d.id,
-          client:   d.client?.nom ?? d.client?.prenom ?? '—',
-          service:  d.typePrestation?.libelle ?? '—',
-          adresse:  `${d.villeIntervention ?? ''} (${d.codePostalIntervention ?? ''})`,
-          budget:   '—',
-          date:     normalizeDate(d.creeLe),
-          urgent:   false,
-          repondu:  false,
+          id:      d.id,
+          client:  `${d.clientPrenom ?? ''} ${d.clientNom ?? ''}`.trim() || '—',
+          service: d.typePrestationLibelle ?? '—',
+          adresse: `${d.villeIntervention ?? ''}${d.codePostalIntervention ? ` (${d.codePostalIntervention})` : ''}`,
+          budget:  '—',
+          date:    normalizeDate(d.creeLe),
+          urgent:  false,
+          repondu: false,
         })));
         setStats(prev => prev.map((s, i) => i === 1 ? { ...s, value: String(list.filter((d: any) => d.statut === 'validee').length) } : s));
       } catch {}
@@ -217,12 +220,13 @@ function DashboardPro() {
       try {
         const raw = await paiementsAPI.getAll();
         const list = Array.isArray(raw) ? raw : [];
+        // Paiements : montant est une string décimale, pas de client imbriqué
         setFactures(list.map((p: any) => ({
           id:      p.id,
-          num:     p.reference ?? `PAY-${p.id?.slice(0,8)}`,
-          client:  p.devis?.client?.nom ?? '—',
+          num:     p.reference ?? `PAY-${p.id?.slice(0,8) ?? ''}`,
+          client:  '—', // clientId disponible mais nom non inclus
           date:    normalizeDate(p.datePaiement ?? p.creeLe),
-          montant: normalizeMontant(p.montant),
+          montant: normalizeMontant(Number(p.montant ?? 0)),
           ok:      p.statut === 'paye',
         })));
       } catch {}
@@ -244,7 +248,7 @@ function DashboardPro() {
             heure:   d ? d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
             duree:   r.dureeMinutes ? `${r.dureeMinutes}min` : '—',
             statut:  r.statut === 'confirme' ? 'confirme' : r.statut === 'annule' ? 'refuse' : 'a_confirmer',
-            avatar:  (r.client?.nom ?? r.client?.prenom ?? 'C')[0]?.toUpperCase() ?? 'C',
+            avatar:  'C', // clientId disponible mais nom non inclus dans la liste
           };
         }));
       } catch {}
@@ -253,20 +257,16 @@ function DashboardPro() {
       try {
         const raw = await conversationsAPI.list();
         const list = Array.isArray(raw) ? raw : [];
+        // Conversations list : clientId/prestataireId uniquement (pas de noms imbriqués)
+        // Messages non inclus dans la liste, chargés séparément
         setConversations(list.map((c: any) => ({
           id:       c.id,
-          nom:      c.client?.nom ?? c.client?.prenom ?? 'Client',
-          avatar:   (c.client?.nom ?? c.client?.prenom ?? 'C')[0]?.toUpperCase() ?? 'C',
-          lu:       !c.nonLus || c.nonLus === 0,
+          nom:      c.sujet ?? `Conversation ${c.id?.slice(0,8) ?? ''}`,
+          avatar:   (c.sujet ?? 'C')[0]?.toUpperCase() ?? 'C',
+          lu:       c.statut !== 'ouverte',
           service:  c.sujet ?? '—',
           chantier: c.sujet ?? '—',
-          messages: (c.messages ?? []).map((m: any) => ({
-            id:    m.id,
-            texte: m.contenu ?? '',
-            de:    m.expediteurId === me?.id ? 'moi' : 'eux',
-            heure: m.envoyeLe ? new Date(m.envoyeLe).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
-            date:  normalizeDate(m.envoyeLe),
-          })),
+          messages: [],
         })));
       } catch {}
 
