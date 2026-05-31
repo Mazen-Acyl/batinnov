@@ -535,7 +535,7 @@ export default function DashboardAdmin() {
   /* ── Fetch données réelles ── */
   const fetchAdminData = useCallback(async () => {
     try {
-      /* Utilisateurs : clients + prestataires */
+      /* Utilisateurs : clients + prestataires — API retourne { data: [], total, ... } */
       const [clientsRaw, presRaw] = await Promise.allSettled([clientsAPI.getAll(), prestatairesAPI.getAll()]);
       const clientsList = clientsRaw.status === 'fulfilled' && Array.isArray(clientsRaw.value) ? clientsRaw.value : [];
       const presList    = presRaw.status === 'fulfilled' && Array.isArray(presRaw.value) ? presRaw.value : [];

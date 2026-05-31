@@ -79,7 +79,7 @@ export const authAPI = {
     return r(await fetch(`${API_URL}/api/auth/password`, { method: 'PATCH', headers: h(), body: JSON.stringify(body) }));
   },
   loginGoogle: async (googleToken) => {
-    const data = await r(await fetch(`${API_URL}/api/auth/google`, { method: 'POST', headers: h(false), body: JSON.stringify({ googleToken }) }));
+    const data = await r(await fetch(`${API_URL}/api/auth/google/token`, { method: 'POST', headers: h(false), body: JSON.stringify({ googleToken }) }));
     if (data?.data?.token) setToken(data.data.token);
     return data.data;
   },
@@ -197,20 +197,23 @@ export const demandesAPI = {
   list: async (filters: Record<string, string> = {}) => {
     const qs = new URLSearchParams(filters).toString();
     const data = await r(await fetch(`${API_URL}/api/demandes${qs ? '?' + qs : ''}`, { headers: h() }));
-    return data.data ?? [];
+    // L'API retourne { data: [], total, page, limit } ou { data: [] }
+    const raw = data.data;
+    return Array.isArray(raw) ? raw : (raw?.data ?? raw?.items ?? []);
   },
-  listMine: async () => {
-    // Le backend filtre automatiquement selon le JWT (client connecté)
-    const data = await r(await fetch(`${API_URL}/api/demandes/mes-demandes`, { headers: h() })).catch(() => ({ data: [] }));
-    return data.data ?? [];
+  listMine: async (clientId: string) => {
+    // Pas de /mes-demandes — filtrer par clientId
+    const data = await r(await fetch(`${API_URL}/api/demandes?clientId=${clientId}`, { headers: h() }));
+    const raw = data.data;
+    return Array.isArray(raw) ? raw : (raw?.data ?? raw?.items ?? []);
   },
   getById: async (id: string) => { const data = await r(await fetch(`${API_URL}/api/demandes/${id}`, { headers: h() })); return data.data; },
   create: async (body: Record<string, unknown>) => {
     const data = await r(await fetch(`${API_URL}/api/demandes`, { method: 'POST', headers: h(), body: JSON.stringify(body) }));
     return data.data;
   },
-  updateStatut: async (id: string, statut: string) => {
-    const data = await r(await fetch(`${API_URL}/api/demandes/${id}`, { method: 'PATCH', headers: h(), body: JSON.stringify({ statut }) }));
+  patch: async (id: string, body: Record<string, unknown>) => {
+    const data = await r(await fetch(`${API_URL}/api/demandes/${id}`, { method: 'PATCH', headers: h(), body: JSON.stringify(body) }));
     return data.data;
   },
   qualifier: async (id: string, adminId: string) => {
@@ -229,15 +232,28 @@ export const demandesAPI = {
 
 // ── CONVERSATIONS ─────────────────────────────────────────────
 export const conversationsAPI = {
-  list: async (role: 'client' | 'pro' | 'admin' = 'client') => {
-    const data = await r(await fetch(`${API_URL}/api/conversations?role=${role}`, { headers: h() }));
-    return data.data ?? [];
+  // Le backend filtre automatiquement selon le JWT (clientId ou prestataireId)
+  list: async (filters: Record<string, string> = {}) => {
+    const qs = new URLSearchParams(filters).toString();
+    const data = await r(await fetch(`${API_URL}/api/conversations${qs ? '?' + qs : ''}`, { headers: h() }));
+    const raw = data.data;
+    return Array.isArray(raw) ? raw : (raw?.data ?? raw?.items ?? []);
   },
-  getById: async (id: string) => { const data = await r(await fetch(`${API_URL}/api/conversations/${id}`, { headers: h() })); return data.data; },
-  listMessages: async (id: string) => { const data = await r(await fetch(`${API_URL}/api/conversations/${id}/messages`, { headers: h() })); return data.data ?? []; },
-  sendMessage: async (id: string, text: string) => {
-    const data = await r(await fetch(`${API_URL}/api/conversations/${id}/messages`, { method: 'POST', headers: h(), body: JSON.stringify({ text }) }));
+  getById: async (id: string) => {
+    const data = await r(await fetch(`${API_URL}/api/conversations/${id}`, { headers: h() }));
     return data.data;
+  },
+  listMessages: async (id: string) => {
+    const data = await r(await fetch(`${API_URL}/api/conversations/${id}/messages`, { headers: h() }));
+    const raw = data.data;
+    return Array.isArray(raw) ? raw : (raw?.data ?? raw?.items ?? []);
+  },
+  sendMessage: async (id: string, contenu: string) => {
+    const data = await r(await fetch(`${API_URL}/api/conversations/${id}/messages`, { method: 'POST', headers: h(), body: JSON.stringify({ contenu }) }));
+    return data.data;
+  },
+  marquerTousLus: async (id: string) => {
+    return r(await fetch(`${API_URL}/api/conversations/${id}/marquer-tous-lus`, { method: 'POST', headers: h() }));
   },
 };
 
@@ -246,28 +262,44 @@ export const rendezVousAPI = {
   list: async (filters: Record<string, string> = {}) => {
     const qs = new URLSearchParams(filters).toString();
     const data = await r(await fetch(`${API_URL}/api/rendez-vous${qs ? '?' + qs : ''}`, { headers: h() }));
-    return data.data ?? [];
+    const raw = data.data;
+    return Array.isArray(raw) ? raw : (raw?.data ?? raw?.items ?? []);
+  },
+  aVenir: async () => {
+    const data = await r(await fetch(`${API_URL}/api/rendez-vous/a-venir`, { headers: h() }));
+    const raw = data.data;
+    return Array.isArray(raw) ? raw : (raw?.data ?? raw?.items ?? []);
   },
   create: async (body: Record<string, unknown>) => {
     const data = await r(await fetch(`${API_URL}/api/rendez-vous`, { method: 'POST', headers: h(), body: JSON.stringify(body) }));
     return data.data;
   },
-  updateStatut: async (id: string, statut: string) => {
-    const data = await r(await fetch(`${API_URL}/api/rendez-vous/${id}`, { method: 'PATCH', headers: h(), body: JSON.stringify({ statut }) }));
+  confirmer: async (id: string) => {
+    const data = await r(await fetch(`${API_URL}/api/rendez-vous/${id}/confirmer`, { method: 'POST', headers: h() }));
+    return data.data;
+  },
+  annuler: async (id: string) => {
+    const data = await r(await fetch(`${API_URL}/api/rendez-vous/${id}/annuler`, { method: 'POST', headers: h() }));
+    return data.data;
+  },
+  marquerRealise: async (id: string) => {
+    const data = await r(await fetch(`${API_URL}/api/rendez-vous/${id}/marquer-realise`, { method: 'POST', headers: h() }));
     return data.data;
   },
 };
 
 // ── NOTIFICATIONS ─────────────────────────────────────────────
 export const notificationsAPI = {
-  list: async () => {
-    const data = await r(await fetch(`${API_URL}/api/notifications`, { headers: h() }));
-    return data.data ?? [];
+  list: async (filters: Record<string, string> = {}) => {
+    const qs = new URLSearchParams(filters).toString();
+    const data = await r(await fetch(`${API_URL}/api/notifications${qs ? '?' + qs : ''}`, { headers: h() }));
+    const raw = data.data;
+    return Array.isArray(raw) ? raw : (raw?.data ?? raw?.items ?? []);
   },
   markRead: async (id: string) => {
-    return r(await fetch(`${API_URL}/api/notifications/${id}/lue`, { method: 'PATCH', headers: h() }));
+    return r(await fetch(`${API_URL}/api/notifications/${id}/marquer-lue`, { method: 'POST', headers: h() }));
   },
   markAllRead: async () => {
-    return r(await fetch(`${API_URL}/api/notifications/tout-lire`, { method: 'PATCH', headers: h() }));
+    return r(await fetch(`${API_URL}/api/notifications/marquer-toutes-lues`, { method: 'POST', headers: h() }));
   },
 };

@@ -196,11 +196,11 @@ function DashboardPro() {
         setStats(prev => prev.map((s, i) => i === 0 ? { ...s, value: String(enCours) } : s));
       } catch {}
 
-      /* Leads (demandes à assigner) */
+      /* Leads (demandes validées disponibles pour le pro) */
       try {
-        const raw = await demandesAPI.list();
+        const raw = await demandesAPI.list({ statut: 'validee' });
         const list = Array.isArray(raw) ? raw : [];
-        setLeads(list.filter((d: any) => d.statut === 'validee' || d.statut === 'devis_emis').map((d: any) => ({
+        setLeads(list.map((d: any) => ({
           id:       d.id,
           client:   d.client?.nom ?? d.client?.prenom ?? '—',
           service:  d.typePrestation?.libelle ?? '—',
@@ -251,7 +251,7 @@ function DashboardPro() {
 
       /* Conversations */
       try {
-        const raw = await conversationsAPI.list('pro');
+        const raw = await conversationsAPI.list();
         const list = Array.isArray(raw) ? raw : [];
         setConversations(list.map((c: any) => ({
           id:       c.id,

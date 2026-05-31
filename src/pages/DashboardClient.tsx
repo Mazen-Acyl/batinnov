@@ -387,30 +387,29 @@ function DashboardClient() {
     setLoading(true);
     setApiError('');
     try {
-      /* Profil */
+      /* Profil — /api/auth/me retourne { id, email, role, profil: { id, prenom, nom, ... } } */
       const me = await authAPI.me();
-      const profil = me?.profil ?? me;
+      const profil = me?.profil;
       setClientForm({
-        prenom:    profil?.prenom    ?? me?.prenom    ?? '',
-        nom:       profil?.nom       ?? me?.nom       ?? '',
+        prenom:    profil?.prenom    ?? '',
+        nom:       profil?.nom       ?? '',
         email:     me?.email         ?? '',
         telephone: profil?.telephone ?? '',
         adresse:   [profil?.adresse, profil?.codePostal, profil?.ville].filter(Boolean).join(', '),
       });
 
-      /* Demandes */
+      /* Demandes — filtre par clientId (profil.id = ID dans la table clients) */
       try {
-        const demandesRaw = await demandesAPI.listMine();
+        const clientId = profil?.id;
+        const demandesRaw = clientId ? await demandesAPI.listMine(clientId) : [];
         const adapted = (Array.isArray(demandesRaw) ? demandesRaw : []).map((d: any) => ({
           id:             d.id,
-          service:        d.typePrestation?.libelle ?? d.domaine ?? 'Service',
+          service:        d.typePrestation?.libelle ?? d.typePrestation?.domaine ?? 'Service',
           sousService:    d.description?.slice(0, 60) ?? '',
-          stage:          mapBackendStatusToStage(d.statut ?? d.status),
-          date:           normalizeDate(d.creeLe ?? d.createdAt),
+          stage:          mapBackendStatusToStage(d.statut),
+          date:           normalizeDate(d.creeLe),
           budget:         '—',
-          devis:          d.nbDevis ?? 0,
-          artisanAccepte: d.artisanAccepte,
-          montantAccepte: d.montantAccepte ? normalizeMontant(d.montantAccepte) : undefined,
+          devis:          0,
         }));
         setDemandes(adapted);
       } catch { /* laisse vide */ }
@@ -421,18 +420,18 @@ function DashboardClient() {
         const list = Array.isArray(devisRaw) ? devisRaw : [];
         setArtisans(list.map((d: any, i: number) => ({
           id:         d.id ?? i,
-          nom:        d.prestataire?.raisonSociale ?? d.prestataire?.nom ?? `Artisan ${i+1}`,
-          metier:     d.typePrestation?.libelle ?? 'Artisan',
-          note:       d.prestataire?.note ?? 4.5,
-          avis:       d.prestataire?.nbAvis ?? 0,
+          nom:        d.prestataire?.raisonSociale ?? `Artisan ${i+1}`,
+          metier:     d.demande?.typePrestation?.libelle ?? '—',
+          note:       0,
+          avis:       0,
           ville:      d.prestataire?.ville ?? '—',
-          avatar:     (d.prestataire?.raisonSociale ?? d.prestataire?.nom ?? 'A')[0]?.toUpperCase() ?? 'A',
-          montant:    normalizeMontant(d.totalTTC ?? d.total_ttc),
-          montantNum: d.totalTTC ?? d.total_ttc ?? 0,
-          delai:      normalizeDate(d.dateEmission ?? d.date_emission),
-          accepte:    d.statut === 'accepte' || d.status === 'accepted_by_client',
+          avatar:     (d.prestataire?.raisonSociale ?? 'A')[0]?.toUpperCase() ?? 'A',
+          montant:    normalizeMontant(d.totalTtc ?? d.total_ttc ?? d.totalTTC),
+          montantNum: d.totalTtc ?? d.total_ttc ?? d.totalTTC ?? 0,
+          delai:      normalizeDate(d.dateEmission),
+          accepte:    d.statut === 'accepte',
           experience: '—',
-          garantie:   '—',
+          garantie:   `${d.dureeValiditeJours ?? 30} jours`,
         })));
       } catch { /* laisse vide */ }
 
@@ -469,9 +468,9 @@ function DashboardClient() {
         })));
       } catch { /* laisse vide */ }
 
-      /* Conversations */
+      /* Conversations — le JWT suffit, pas besoin de rôle */
       try {
-        const convsRaw = await conversationsAPI.list('client');
+        const convsRaw = await conversationsAPI.list();
         const list = Array.isArray(convsRaw) ? convsRaw : [];
         setConversations(list.map((c: any) => ({
           id:     c.id,
@@ -481,7 +480,7 @@ function DashboardClient() {
           metier: c.prestation?.typePrestation?.libelle ?? '—',
           note:   c.prestataire?.note ?? 0,
           service: c.sujet ?? '—',
-          messages: (c.messages ?? []).map((m: any) => ({
+          messages: (c.messages ?? c.dernierMessage ? [c.dernierMessage] : []).filter(Boolean).map((m: any) => ({
             id:    m.id,
             texte: m.contenu ?? '',
             de:    m.expediteurId === me?.id ? 'moi' : 'eux',
