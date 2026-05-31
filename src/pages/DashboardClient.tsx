@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { authAPI, demandesAPI, devisAPI, paiementsAPI, conversationsAPI, rendezVousAPI, notificationsAPI, normalizeDate, normalizeMontant } from '../services/api';
+import { authAPI, demandesAPI, devisAPI, paiementsAPI, conversationsAPI, rendezVousAPI, notificationsAPI, prestatairesAPI, normalizeDate, normalizeMontant, batchFetchById } from '../services/api';
 import './DashboardClient.css';
 
 // ─── Notifications ────────────────────────────────────────────────────────────
@@ -455,38 +455,55 @@ function DashboardClient() {
         })));
       } catch { /* laisse vide */ }
 
-      /* RDV / agenda */
+      /* RDV + Conversations — batch-fetch prestataires pour avoir leurs noms */
       try {
-        const rdvsRaw = await rendezVousAPI.list();
-        const list = Array.isArray(rdvsRaw) ? rdvsRaw : [];
-        setAgenda(list.map((r: any) => ({
-          id:     r.id,
-          heure:  r.dateDebut ? new Date(r.dateDebut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
-          date:   normalizeDate(r.dateDebut),
-          titre:  r.notes ?? r.type ?? 'Rendez-vous',
-          artisan:'—', // la liste ne retourne que des IDs (prestataireId, adminId)
-          duree:  r.dureeMinutes ? `${r.dureeMinutes}min` : '—',
-          statut: r.statut ?? 'propose',
-          lieu:   r.lieu ?? '',
-        })));
-      } catch { /* laisse vide */ }
+        const [rdvsRaw, convsRaw] = await Promise.all([
+          rendezVousAPI.list(),
+          conversationsAPI.list(),
+        ]);
+        const rdvList  = Array.isArray(rdvsRaw)  ? rdvsRaw  : [];
+        const convList = Array.isArray(convsRaw) ? convsRaw : [];
 
-      /* Conversations — le JWT suffit, pas besoin de rôle */
-      try {
-        const convsRaw = await conversationsAPI.list();
-        const list = Array.isArray(convsRaw) ? convsRaw : [];
-        // La liste conversations ne retourne que clientId/prestataireId (pas d'objets imbriqués)
-        // On affiche le sujet et on charge les messages à la demande
-        setConversations(list.map((c: any) => ({
-          id:       c.id,
-          nom:      c.sujet ?? `Conversation ${c.id?.slice(0,8) ?? ''}`,
-          avatar:   (c.sujet ?? 'C')[0]?.toUpperCase() ?? 'C',
-          lu:       c.statut !== 'ouverte', // approximation : ouverte = non lu
-          metier:   '—',
-          note:     0,
-          service:  c.sujet ?? '—',
-          messages: [], // chargé séparément via /conversations/:id/messages
+        // Collecte tous les prestataireIds uniques
+        const presIds = [...new Set([
+          ...rdvList.map((r: any) => r.prestataireId).filter(Boolean),
+          ...convList.map((c: any) => c.prestataireId).filter(Boolean),
+        ])];
+
+        // Batch fetch des prestataires (max 5 en parallèle)
+        const presMap = await batchFetchById(
+          (id) => prestatairesAPI.getById(id),
+          presIds
+        );
+        const presName = (id: string) => {
+          const p = presMap.get(id) as any;
+          return p?.raisonSociale ?? '—';
+        };
+
+        setAgenda(rdvList.map((r: any) => ({
+          id:      r.id,
+          heure:   r.dateDebut ? new Date(r.dateDebut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
+          date:    normalizeDate(r.dateDebut),
+          titre:   r.notes ?? r.type ?? 'Rendez-vous',
+          artisan: presName(r.prestataireId),
+          duree:   r.dureeMinutes ? `${r.dureeMinutes}min` : '—',
+          statut:  r.statut ?? 'propose',
+          lieu:    r.lieu ?? '',
         })));
+
+        setConversations(convList.map((c: any) => {
+          const nom = presName(c.prestataireId);
+          return {
+            id:       c.id,
+            nom:      nom !== '—' ? nom : (c.sujet ?? `Conv. ${c.id?.slice(0,6) ?? ''}`),
+            avatar:   nom !== '—' ? nom[0].toUpperCase() : 'C',
+            lu:       c.statut !== 'ouverte',
+            metier:   '—',
+            note:     0,
+            service:  c.sujet ?? '—',
+            messages: [], // chargés séparément via /conversations/:id/messages
+          };
+        }));
       } catch { /* laisse vide */ }
 
       /* Notifications */
@@ -1364,9 +1381,31 @@ function DashboardClient() {
                     <button
                       key={conv.id}
                       className={`chat-conv-item ${selectedConv === conv.id ? 'active' : ''}`}
-                      onClick={() => {
+                      onClick={async () => {
                         setSelectedConv(conv.id);
+                        // Marque lu en local immédiatement
                         setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, lu: true } : c));
+                        // Charge les messages si pas encore chargés
+                        if (!conv.messages || conv.messages.length === 0) {
+                          try {
+                            const msgs = await conversationsAPI.listMessages(conv.id);
+                            const me = await authAPI.me();
+                            setConversations(prev => prev.map(c =>
+                              c.id === conv.id ? {
+                                ...c,
+                                messages: (Array.isArray(msgs) ? msgs : []).map((m: any) => ({
+                                  id:    m.id,
+                                  texte: m.contenu ?? '',
+                                  de:    m.expediteurId === me?.id ? 'moi' : 'eux',
+                                  heure: m.envoyeLe ? new Date(m.envoyeLe).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
+                                  date:  new Date(m.envoyeLe ?? Date.now()).toLocaleDateString('fr-FR'),
+                                })),
+                              } : c
+                            ));
+                          } catch { /* laisse vide */ }
+                        }
+                        // Marque lu côté serveur
+                        conversationsAPI.marquerTousLus(conv.id).catch(() => {});
                       }}
                     >
                       <div className="chat-conv-avatar" style={{ position: 'relative' }}>

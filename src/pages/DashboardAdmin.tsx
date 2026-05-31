@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { authAPI, clientsAPI, prestatairesAPI, devisAPI, prestationsAPI, demandesAPI, paiementsAPI, rendezVousAPI, prospectsAPI, normalizeDate, normalizeMontant } from '../services/api';
+import { authAPI, clientsAPI, prestatairesAPI, devisAPI, prestationsAPI, demandesAPI, paiementsAPI, rendezVousAPI, prospectsAPI, normalizeDate, normalizeMontant, batchFetchById } from '../services/api';
 import './DashboardAdmin.css';
 
 /* ── Icônes SVG ── */
@@ -547,11 +547,19 @@ export default function DashboardAdmin() {
         ? (Array.isArray(presRaw.value) ? presRaw.value : [])
         : [];
 
+      // Lookup maps : id → nom (utilisés pour enrichir les autres listes)
+      const clientMap = new Map<string, string>(
+        clientsList.map((c: any) => [c.id, `${c.prenom ?? ''} ${c.nom ?? ''}`.trim() || c.email || '—'])
+      );
+      const presMap = new Map<string, string>(
+        presList.map((p: any) => [p.id, p.raisonSociale ?? '—'])
+      );
+
       const allUsers = [
         ...clientsList.map((c: any) => ({
           id:         c.id,
           nom:        `${c.prenom ?? ''} ${c.nom ?? ''}`.trim() || c.email || '—',
-          email:      c.email ?? '—',        // jointé directement, pas c.utilisateur.email
+          email:      c.email ?? '—',
           phone:      c.telephone ?? '—',
           role:       'client',
           ville:      c.ville ?? '—',
@@ -562,7 +570,7 @@ export default function DashboardAdmin() {
         ...presList.map((p: any) => ({
           id:         p.id,
           nom:        p.raisonSociale ?? '—',
-          email:      p.email ?? '—',        // jointé directement
+          email:      p.email ?? '—',
           phone:      p.telephone ?? '—',
           role:       'pro',
           ville:      p.ville ?? '—',
@@ -626,14 +634,14 @@ export default function DashboardAdmin() {
       try {
         const raw = await rendezVousAPI.list();
         const list = Array.isArray(raw) ? raw : [];
-        // Rendez-vous liste : clientId, prestataireId, adminId (IDs uniquement)
+        // Rendez-vous : clientId et prestataireId résolus via lookup maps
         setRdvList(list.map((r: any) => {
           const d = r.dateDebut ? new Date(r.dateDebut) : null;
           return {
             id:      r.id,
             titre:   r.notes ?? r.type ?? 'Rendez-vous',
-            client:  '—', // clientId disponible mais nom non inclus
-            pro:     '—', // prestataireId disponible mais nom non inclus
+            client:  clientMap.get(r.clientId) ?? '—',
+            pro:     presMap.get(r.prestataireId) ?? '—',
             date:    d ? d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—',
             heure:   d ? d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
             adresse: r.lieu ?? '—',
@@ -647,13 +655,13 @@ export default function DashboardAdmin() {
       try {
         const raw = await prestationsAPI.getAll();
         const list = Array.isArray(raw) ? raw : [];
-        // Prestations liste : uniquement ligneDevisId, prestataireId (IDs)
+        // Prestations liste : prestataireId résolu via presMap (déjà chargée)
         setServices(list.map((p: any) => ({
           id:          p.id,
           ref:         `SRV · #${p.id?.slice(0,6) ?? ''}`,
           titre:       p.notesInternes ?? 'Prestation',
-          client:      '—',
-          pro:         '—',
+          client:      '—', // clientId non disponible directement
+          pro:         presMap.get(p.prestataireId) ?? '—',
           ville:       p.villeIntervention ?? '—',
           address:     `${p.adresseIntervention ?? ''}, ${p.codePostalIntervention ?? ''} ${p.villeIntervention ?? ''}`.trim(),
           serviceType: 'travaux' as const,

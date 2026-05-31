@@ -1,6 +1,25 @@
 // Chemins relatifs partout : Vite proxy en dev, Vercel rewrites en prod
 const API_URL = '';
 
+/* ── Batch fetch : récupère plusieurs entités par ID en parallèle ── */
+export async function batchFetchById<T>(
+  fetchFn: (id: string) => Promise<T>,
+  ids: string[],
+  concurrency = 5
+): Promise<Map<string, T>> {
+  const unique = [...new Set(ids.filter(Boolean))];
+  const map = new Map<string, T>();
+  for (let i = 0; i < unique.length; i += concurrency) {
+    const chunk = unique.slice(i, i + concurrency);
+    await Promise.all(
+      chunk.map(async id => {
+        try { map.set(id, await fetchFn(id)); } catch { /* ignore */ }
+      })
+    );
+  }
+  return map;
+}
+
 /* ── Helpers de normalisation (backend → frontend) ── */
 export function normalizeDate(v: unknown): string {
   if (!v) return '—';

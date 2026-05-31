@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { authAPI, prestationsAPI, demandesAPI, paiementsAPI, conversationsAPI, rendezVousAPI, notificationsAPI, normalizeDate, normalizeMontant } from '../services/api';
+import { authAPI, prestationsAPI, demandesAPI, paiementsAPI, conversationsAPI, rendezVousAPI, notificationsAPI, clientsAPI, normalizeDate, normalizeMontant, batchFetchById } from '../services/api';
 import './DashboardPro.css';
 
 // ─── Notifications Pro ────────────────────────────────────────────────────────
@@ -231,43 +231,61 @@ function DashboardPro() {
         })));
       } catch {}
 
-      /* RDV */
+      /* RDV + Conversations — on batch-fetch les clients pour avoir leurs noms */
       try {
-        const raw = await rendezVousAPI.list();
-        const list = Array.isArray(raw) ? raw : [];
+        const [rdvsRaw, convsRaw] = await Promise.all([
+          rendezVousAPI.list(),
+          conversationsAPI.list(),
+        ]);
+        const rdvList  = Array.isArray(rdvsRaw)  ? rdvsRaw  : [];
+        const convList = Array.isArray(convsRaw) ? convsRaw : [];
+
+        // Collecte tous les clientIds uniques
+        const clientIds = [...new Set([
+          ...rdvList.map((r: any) => r.clientId).filter(Boolean),
+          ...convList.map((c: any) => c.clientId).filter(Boolean),
+        ])];
+
+        // Batch fetch des clients en parallèle (max 5 à la fois)
+        const clientMap = await batchFetchById(
+          (id) => clientsAPI.getById(id),
+          clientIds
+        );
+        const clientName = (id: string) => {
+          const c = clientMap.get(id) as any;
+          return c ? `${c.prenom ?? ''} ${c.nom ?? ''}`.trim() || c.email || '—' : '—';
+        };
+
         const DAY_NAMES = ['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'];
-        setAgendaRdv(list.map((r: any) => {
+        setAgendaRdv(rdvList.map((r: any) => {
           const d = r.dateDebut ? new Date(r.dateDebut) : null;
           const dayDiff = d ? Math.round((d.getTime() - Date.now()) / 86400000) : 99;
+          const name = clientName(r.clientId);
           return {
             id:      r.id,
-            client:  r.client?.nom ?? r.client?.prenom ?? '—',
+            client:  name,
             service: r.notes ?? r.type ?? '—',
             dateStr: d ? `${DAY_NAMES[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}` : '—',
             dayIdx:  Math.max(0, Math.min(5, dayDiff)),
             heure:   d ? d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
             duree:   r.dureeMinutes ? `${r.dureeMinutes}min` : '—',
             statut:  r.statut === 'confirme' ? 'confirme' : r.statut === 'annule' ? 'refuse' : 'a_confirmer',
-            avatar:  'C', // clientId disponible mais nom non inclus dans la liste
+            avatar:  name !== '—' ? name[0].toUpperCase() : 'C',
           };
         }));
-      } catch {}
 
-      /* Conversations */
-      try {
-        const raw = await conversationsAPI.list();
-        const list = Array.isArray(raw) ? raw : [];
-        // Conversations list : clientId/prestataireId uniquement (pas de noms imbriqués)
-        // Messages non inclus dans la liste, chargés séparément
-        setConversations(list.map((c: any) => ({
-          id:       c.id,
-          nom:      c.sujet ?? `Conversation ${c.id?.slice(0,8) ?? ''}`,
-          avatar:   (c.sujet ?? 'C')[0]?.toUpperCase() ?? 'C',
-          lu:       c.statut !== 'ouverte',
-          service:  c.sujet ?? '—',
-          chantier: c.sujet ?? '—',
-          messages: [],
-        })));
+        setConversations(convList.map((c: any) => {
+          const name = clientName(c.clientId);
+          return {
+            id:       c.id,
+            nom:      name !== '—' ? name : (c.sujet ?? `Conv. ${c.id?.slice(0,6) ?? ''}`),
+            avatar:   name !== '—' ? name[0].toUpperCase() : 'C',
+            lu:       c.statut !== 'ouverte',
+            service:  c.sujet ?? '—',
+            chantier: c.sujet ?? '—',
+            messages: [],
+          };
+        }));
       } catch {}
 
     } catch (err: any) {
@@ -847,9 +865,28 @@ function DashboardPro() {
                     <button
                       key={conv.id}
                       className={`chat-conv-item ${selectedConv === conv.id ? 'active' : ''}`}
-                      onClick={() => {
+                      onClick={async () => {
                         setSelectedConv(conv.id);
                         setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, lu: true } : c));
+                        if (!conv.messages || conv.messages.length === 0) {
+                          try {
+                            const msgs = await conversationsAPI.listMessages(conv.id);
+                            const me = await authAPI.me();
+                            setConversations(prev => prev.map(c =>
+                              c.id === conv.id ? {
+                                ...c,
+                                messages: (Array.isArray(msgs) ? msgs : []).map((m: any) => ({
+                                  id:    m.id,
+                                  texte: m.contenu ?? '',
+                                  de:    m.expediteurId === me?.id ? 'moi' : 'eux',
+                                  heure: m.envoyeLe ? new Date(m.envoyeLe).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
+                                  date:  new Date(m.envoyeLe ?? Date.now()).toLocaleDateString('fr-FR'),
+                                })),
+                              } : c
+                            ));
+                          } catch {}
+                        }
+                        conversationsAPI.marquerTousLus(conv.id).catch(() => {});
                       }}
                     >
                       <div style={{ position: 'relative', flexShrink: 0 }}>
