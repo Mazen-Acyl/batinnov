@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { authAPI, prestationsAPI, demandesAPI, paiementsAPI, conversationsAPI, rendezVousAPI, notificationsAPI, normalizeDate, normalizeMontant } from '../services/api';
 import './DashboardPro.css';
 
 // ─── Notifications Pro ────────────────────────────────────────────────────────
@@ -48,127 +49,84 @@ function proFormatRelative(iso: string): string {
 
 function DashboardPro() {
   const [activePage, setActivePage] = useState('dashboard');
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const handleLogout = () => { logout(); navigate('/'); };
   const [menuOpen, setMenuOpen] = useState(false);
   const [notif, setNotif] = useState<{ msg: string; type?: 'error' } | null>(null);
   const [notifPanelOpen, setNotifPanelOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const showNotif = (msg: string, type?: 'error') => {
     setNotif({ msg, type });
     setTimeout(() => setNotif(null), 3200);
   };
 
-  const pro = {
-    nom: 'Marc Dupont',
-    entreprise: 'SARL Dupont BTP',
-    metier: 'Électricien IRVE',
-    ville: 'Clermont-Ferrand',
-    note: 4.8,
-    avis: 24,
-    avatar: 'MD'
-  };
-
+  /* ── Profil (depuis API) ── */
   const [proForm, setProForm] = useState({
-    prenom: 'Marc', nom: 'Dupont', email: 'marc@dupont-btp.fr',
-    tel: '04 73 12 34 56', societe: 'SARL Dupont BTP',
-    siret: '123 456 789 00012', ville: 'Clermont-Ferrand'
+    prenom: user?.prenom ?? '', nom: user?.nom ?? '',
+    email: user?.email ?? '',
+    tel: '', societe: '', siret: '', ville: ''
   });
 
-  const stats = [
-    { label: 'Chantiers en cours', value: '3', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, trend: '+1 cette semaine', page: 'chantiers' },
-    { label: 'Devis en attente', value: '5', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>, trend: '2 à répondre', page: 'leads' },
-    { label: 'Revenus ce mois', value: '4 200 €', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>, trend: '+12% vs mois dernier', page: 'facturation' },
-    { label: 'Nouveaux leads', value: '8', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>, trend: '3 non lus', page: 'leads' }
-  ];
+  const pro = {
+    nom:       `${proForm.prenom} ${proForm.nom}`.trim() || user?.email || '—',
+    entreprise: proForm.societe || '—',
+    metier:    '—',
+    ville:     proForm.ville || '—',
+    note:      0,
+    avis:      0,
+    avatar:    proForm.prenom[0]?.toUpperCase() + (proForm.nom[0]?.toUpperCase() ?? '')
+  };
 
-  const [chantiers, setChantiers] = useState([
-    { id: 1, ref: '#P1', client: 'Marie L.', service: 'Borne IRVE', titre: 'Installation borne Wallbox 7.4 kW', adresse: 'Aubière (63)', date: '12 mai 2026', statut: 'en_cours', montant: '1 400 €', currentStep: 2, steps: ['Visite', 'Pose', 'Raccord.', 'Livraison'] },
-    { id: 2, ref: '#P2', client: 'Thomas D.', service: 'Borne IRVE', titre: 'Wallbox 11kW Riom', adresse: 'Riom (63)', date: '15 mai 2026', statut: 'planifie', montant: '1 600 €', currentStep: 0, steps: ['Visite', 'Pose', 'Raccord.', 'Livraison'] },
-    { id: 3, ref: '#P3', client: 'Sophie M.', service: 'Rénovation', titre: 'Rénovation salle de bain', adresse: 'Clermont-Ferrand', date: '20 mai 2026', statut: 'planifie', montant: '2 200 €', currentStep: 0, steps: ['Démolition', 'Plomberie', 'Carrelage', 'Finitions', 'Livraison'] },
-    { id: 4, ref: '#P4', client: 'Pierre R.', service: 'Borne IRVE', titre: 'Borne Wallbox Issoire', adresse: 'Issoire (63)', date: '2 mai 2026', statut: 'termine', montant: '1 200 €', currentStep: 3, steps: ['Visite', 'Pose', 'Raccord.', 'Livraison'] },
-    { id: 5, ref: '#P5', client: 'Julie K.', service: 'Borne IRVE', titre: 'Wallbox 7kW Cournon', adresse: 'Cournon (63)', date: '28 avr. 2026', statut: 'termine', montant: '1 800 €', currentStep: 3, steps: ['Visite', 'Pose', 'Raccord.', 'Livraison'] }
+  const [stats, setStats] = useState([
+    { label: 'Chantiers en cours', value: '—', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, trend: '', page: 'chantiers' },
+    { label: 'Devis en attente',   value: '—', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>, trend: '', page: 'leads' },
+    { label: 'Revenus ce mois',    value: '—', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>, trend: '', page: 'facturation' },
+    { label: 'Nouveaux leads',     value: '—', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>, trend: '', page: 'leads' }
   ]);
 
-  const handleUpdateStep = (id: number, stepIndex: number) => {
-    setChantiers(prev => prev.map(c => {
+  const [chantiers, setChantiers] = useState<any[]>([]);
+
+  const handleUpdateStep = (id: any, stepIndex: number) => {
+    setChantiers(prev => prev.map((c: any) => {
       if (c.id !== id) return c;
       const isLast = stepIndex === c.steps.length - 1;
       return { ...c, currentStep: stepIndex, statut: isLast ? 'termine' : stepIndex === 0 ? 'planifie' : 'en_cours' };
     }));
+    prestationsAPI.changerStatut(id, stepIndex === 0 ? 'planifiee' : 'en_cours').catch(() => {});
     showNotif('Avancement mis à jour ✓');
   };
 
-  const [leads, setLeads] = useState([
-    { id: 1, client: 'Antoine B.', service: 'Borne IRVE Wallbox 11kW', adresse: 'Chamalières (63)', budget: '1 600 €', date: 'Il y a 2h', urgent: true, repondu: false },
-    { id: 2, client: 'Nadia F.', service: 'Borne IRVE Wallbox 7kW', adresse: 'Aubière (63)', budget: '1 200 €', date: 'Il y a 5h', urgent: false, repondu: false },
-    { id: 3, client: 'Robert V.', service: 'Rénovation électrique', adresse: 'Riom (63)', budget: '800 €', date: 'Hier', urgent: false, repondu: false }
-  ]);
+  const [leads, setLeads] = useState<any[]>([]);
 
   // ── Agenda Pro ──
-  interface RdvPro { id: number; client: string; service: string; dateStr: string; dayIdx: number; heure: string; duree: string; statut: 'confirme' | 'a_confirmer' | 'refuse'; avatar: string; }
-  const [agendaRdv, setAgendaRdv] = useState<RdvPro[]>([
-    { id: 1, client: 'Marie L.',   service: 'Mise en service borne',     dateStr: 'Lun. 19 mai', dayIdx: 0, heure: '09:00', duree: '2h',   statut: 'confirme',   avatar: 'ML' },
-    { id: 2, client: 'Thomas D.',  service: 'Visite technique Wallbox',  dateStr: 'Mar. 20 mai', dayIdx: 1, heure: '14:00', duree: '1h30', statut: 'confirme',   avatar: 'TD' },
-    { id: 3, client: 'Nadia F.',   service: 'Diagnostic électrique',     dateStr: 'Mar. 20 mai', dayIdx: 1, heure: '11:00', duree: '1h',   statut: 'a_confirmer',avatar: 'NF' },
-    { id: 4, client: 'Sophie M.',  service: 'Démarrage rénovation SDB',  dateStr: 'Jeu. 22 mai', dayIdx: 3, heure: '08:00', duree: '3h',   statut: 'confirme',   avatar: 'SM' },
-    { id: 5, client: 'Pierre R.',  service: 'Vérification installation', dateStr: 'Ven. 23 mai', dayIdx: 4, heure: '16:00', duree: '1h',   statut: 'a_confirmer',avatar: 'PR' },
-    { id: 6, client: 'Antoine B.', service: 'Installation Wallbox 11kW', dateStr: 'Sam. 24 mai', dayIdx: 5, heure: '09:00', duree: '4h',   statut: 'confirme',   avatar: 'AB' },
-  ]);
+  interface RdvPro { id: any; client: string; service: string; dateStr: string; dayIdx: number; heure: string; duree: string; statut: 'confirme' | 'a_confirmer' | 'refuse'; avatar: string; }
+  const [agendaRdv, setAgendaRdv] = useState<RdvPro[]>([]);
   const [agendaDay, setAgendaDay] = useState(0);
-  const WEEK_DAYS = ['Lun. 19/05','Mar. 20/05','Mer. 21/05','Jeu. 22/05','Ven. 23/05','Sam. 24/05'];
-  const handleConfirmRdv = (id: number) => {
+  const WEEK_DAYS = (() => {
+    const days: string[] = [];
+    const now = new Date();
+    const DAY_NAMES = ['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'];
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(now); d.setDate(now.getDate() + i);
+      days.push(`${DAY_NAMES[d.getDay()]} ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`);
+    }
+    return days;
+  })();
+  const handleConfirmRdv = (id: any) => {
     setAgendaRdv(prev => prev.map(r => r.id === id ? { ...r, statut: 'confirme' } : r));
     showNotif('RDV confirmé ✓');
   };
-  const handleRefuseRdv = (id: number) => {
+  const handleRefuseRdv = (id: any) => {
     setAgendaRdv(prev => prev.map(r => r.id === id ? { ...r, statut: 'refuse' } : r));
     showNotif('RDV refusé', 'error');
   };
 
-  // ── Chantier detail ──
-  const [selectedChantier, setSelectedChantier] = useState<number | null>(null);
-
-  const [docs, setDocs] = useState([
-    { id: 1, name: 'K-bis', statut: 'valide', date: '01/01/2026', ok: true },
-    { id: 2, name: 'Assurance décennale', statut: 'valide', date: '01/01/2026', ok: true },
-    { id: 3, name: 'Carte BTP', statut: 'en_attente', date: '—', ok: false }
-  ]);
-
-  const [factures, setFactures] = useState([
-    { id: 1, num: 'F-2026-005', client: 'Pierre R.', date: '2 mai 2026', montant: '1 200 €', ok: true },
-    { id: 2, num: 'F-2026-004', client: 'Julie K.', date: '28 avr.', montant: '1 800 €', ok: true },
-    { id: 3, num: 'F-2026-003', client: 'Marie L.', date: '12 mai 2026', montant: '1 400 €', ok: false }
-  ]);
-
-  const [conversations, setConversations] = useState([
-    {
-      id: 1, nom: 'Marie L.', avatar: 'ML', lu: false,
-      service: 'Borne IRVE', chantier: 'Installation Borne IRVE',
-      messages: [
-        { id: 1, texte: "Bonjour, est-ce que vous pouvez venir mercredi matin ?", de: 'eux', heure: '10:18', date: "Aujourd'hui" },
-        { id: 2, texte: "La porte de garage sera ouverte à partir de 8h30.", de: 'eux', heure: '10:32', date: "Aujourd'hui" },
-      ]
-    },
-    {
-      id: 2, nom: 'Thomas D.', avatar: 'TD', lu: false,
-      service: 'Borne IRVE', chantier: 'Wallbox 7kW Riom',
-      messages: [
-        { id: 1, texte: "Merci pour le devis, je l'accepte !", de: 'eux', heure: '09:15', date: 'Hier' },
-        { id: 2, texte: "Parfait Thomas ! Je confirme le rendez-vous pour le 15.", de: 'moi', heure: '09:20', date: 'Hier' },
-        { id: 3, texte: "Super, à mardi alors !", de: 'eux', heure: '09:28', date: 'Hier' },
-      ]
-    },
-    {
-      id: 3, nom: 'Pierre R.', avatar: 'PR', lu: true,
-      service: 'Borne IRVE', chantier: 'Borne Issoire',
-      messages: [
-        { id: 1, texte: "Le chantier s'est très bien passé, merci.", de: 'eux', heure: '16:40', date: '2 mai' },
-        { id: 2, texte: "Parfait, à bientôt !", de: 'moi', heure: '17:05', date: '2 mai' },
-      ]
-    }
-  ]);
+  const [selectedChantier, setSelectedChantier] = useState<any | null>(null);
+  const [docs, setDocs] = useState<any[]>([]);
+  const [factures, setFactures] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<any[]>([]);
   const [selectedConv, setSelectedConv] = useState(null);
   const [draft, setDraft] = useState('');
   const [convSearch, setConvSearch] = useState('');
@@ -200,6 +158,126 @@ function DashboardPro() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversations, selectedConv]);
+
+  /* ── Fetch données réelles ── */
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const me = await authAPI.me();
+      const profil = me?.profil ?? me;
+      setProForm({
+        prenom:  profil?.prenom          ?? me?.prenom ?? '',
+        nom:     profil?.nom             ?? me?.nom    ?? '',
+        email:   me?.email               ?? '',
+        tel:     profil?.telephone       ?? '',
+        societe: profil?.raisonSociale   ?? '',
+        siret:   profil?.siret           ?? '',
+        ville:   profil?.ville           ?? '',
+      });
+
+      /* Chantiers / prestations */
+      try {
+        const raw = await prestationsAPI.getAll();
+        const list = Array.isArray(raw) ? raw : [];
+        setChantiers(list.map((p: any) => ({
+          id:          p.id,
+          ref:         `#${p.id?.slice(0,6) ?? 'P'}`,
+          client:      p.client?.nom ?? p.client?.prenom ?? '—',
+          service:     p.ligneDevis?.typePrestation?.libelle ?? '—',
+          titre:       p.ligneDevis?.designation ?? 'Prestation',
+          adresse:     `${p.villeIntervention ?? ''} (${p.codePostalIntervention ?? ''})`,
+          date:        normalizeDate(p.datePrevue),
+          statut:      p.statut === 'terminee' ? 'termine' : p.statut === 'en_cours' ? 'en_cours' : 'planifie',
+          montant:     normalizeMontant(p.ligneDevis?.montantHT),
+          currentStep: p.statut === 'terminee' ? 3 : p.statut === 'en_cours' ? 1 : 0,
+          steps:       ['Visite', 'Intervention', 'Contrôle', 'Livraison'],
+        })));
+        const enCours = list.filter((p: any) => p.statut === 'en_cours').length;
+        setStats(prev => prev.map((s, i) => i === 0 ? { ...s, value: String(enCours) } : s));
+      } catch {}
+
+      /* Leads (demandes à assigner) */
+      try {
+        const raw = await demandesAPI.list();
+        const list = Array.isArray(raw) ? raw : [];
+        setLeads(list.filter((d: any) => d.statut === 'validee' || d.statut === 'devis_emis').map((d: any) => ({
+          id:       d.id,
+          client:   d.client?.nom ?? d.client?.prenom ?? '—',
+          service:  d.typePrestation?.libelle ?? '—',
+          adresse:  `${d.villeIntervention ?? ''} (${d.codePostalIntervention ?? ''})`,
+          budget:   '—',
+          date:     normalizeDate(d.creeLe),
+          urgent:   false,
+          repondu:  false,
+        })));
+        setStats(prev => prev.map((s, i) => i === 1 ? { ...s, value: String(list.filter((d: any) => d.statut === 'validee').length) } : s));
+      } catch {}
+
+      /* Factures / paiements */
+      try {
+        const raw = await paiementsAPI.getAll();
+        const list = Array.isArray(raw) ? raw : [];
+        setFactures(list.map((p: any) => ({
+          id:      p.id,
+          num:     p.reference ?? `PAY-${p.id?.slice(0,8)}`,
+          client:  p.devis?.client?.nom ?? '—',
+          date:    normalizeDate(p.datePaiement ?? p.creeLe),
+          montant: normalizeMontant(p.montant),
+          ok:      p.statut === 'paye',
+        })));
+      } catch {}
+
+      /* RDV */
+      try {
+        const raw = await rendezVousAPI.list();
+        const list = Array.isArray(raw) ? raw : [];
+        const DAY_NAMES = ['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'];
+        setAgendaRdv(list.map((r: any) => {
+          const d = r.dateDebut ? new Date(r.dateDebut) : null;
+          const dayDiff = d ? Math.round((d.getTime() - Date.now()) / 86400000) : 99;
+          return {
+            id:      r.id,
+            client:  r.client?.nom ?? r.client?.prenom ?? '—',
+            service: r.notes ?? r.type ?? '—',
+            dateStr: d ? `${DAY_NAMES[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}` : '—',
+            dayIdx:  Math.max(0, Math.min(5, dayDiff)),
+            heure:   d ? d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
+            duree:   r.dureeMinutes ? `${r.dureeMinutes}min` : '—',
+            statut:  r.statut === 'confirme' ? 'confirme' : r.statut === 'annule' ? 'refuse' : 'a_confirmer',
+            avatar:  (r.client?.nom ?? r.client?.prenom ?? 'C')[0]?.toUpperCase() ?? 'C',
+          };
+        }));
+      } catch {}
+
+      /* Conversations */
+      try {
+        const raw = await conversationsAPI.list('pro');
+        const list = Array.isArray(raw) ? raw : [];
+        setConversations(list.map((c: any) => ({
+          id:       c.id,
+          nom:      c.client?.nom ?? c.client?.prenom ?? 'Client',
+          avatar:   (c.client?.nom ?? c.client?.prenom ?? 'C')[0]?.toUpperCase() ?? 'C',
+          lu:       !c.nonLus || c.nonLus === 0,
+          service:  c.sujet ?? '—',
+          chantier: c.sujet ?? '—',
+          messages: (c.messages ?? []).map((m: any) => ({
+            id:    m.id,
+            texte: m.contenu ?? '',
+            de:    m.expediteurId === me?.id ? 'moi' : 'eux',
+            heure: m.envoyeLe ? new Date(m.envoyeLe).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
+            date:  normalizeDate(m.envoyeLe),
+          })),
+        })));
+      } catch {}
+
+    } catch (err: any) {
+      console.error('[DashboardPro] fetchData:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const convActive = conversations.find(c => c.id === selectedConv);
   const filteredConvs = conversations.filter(c =>
@@ -289,6 +367,13 @@ function DashboardPro() {
     documents:   'Documents',
     facturation: 'Facturation'
   }[activePage] || '';
+
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', flexDirection: 'column', gap: 16, background: '#FFF8F5' }}>
+      <div style={{ width: 40, height: 40, border: '3px solid #F3E8E4', borderTopColor: '#E87D50', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <p style={{ color: '#6B7280', fontSize: 14 }}>Chargement de votre espace pro…</p>
+    </div>
+  );
 
   return (
     <div className="dp-layout">

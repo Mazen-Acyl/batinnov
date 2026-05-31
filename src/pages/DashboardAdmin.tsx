@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { authAPI, clientsAPI, prestatairesAPI, devisAPI, prestationsAPI, demandesAPI, paiementsAPI, rendezVousAPI, prospectsAPI, normalizeDate, normalizeMontant } from '../services/api';
 import './DashboardAdmin.css';
 
 /* ── Icônes SVG ── */
@@ -83,42 +84,10 @@ const DEFAULT_QUOTE_LINES: QuoteLine[] = [
   { id: 3, label: 'Contrôle qualité et remise',      quantity: 1, unitPrice: 280,  tvaRate: 20 },
 ];
 
-const initQuotes: AdminQuote[] = [
-  { id: 1, ref: 'DEV-001', title: 'Devis installation borne IRVE 7,4 kW', client: 'Jean Dupont', provider: 'Marc Leroy', serviceType: 'irve', createdAt: '10 mai', validUntil: '10 juin', status: 'accepted_by_client',
-    items: [
-      { id: 1, label: 'Fourniture et pose borne Wallbox',         quantity: 1, unitPrice: 1200, tvaRate: 20 },
-      { id: 2, label: 'Câblage et protection tableau',             quantity: 1, unitPrice: 480,  tvaRate: 20 },
-      { id: 3, label: 'Mise en service + attestation CONSUEL',     quantity: 1, unitPrice: 220,  tvaRate: 20 },
-    ]},
-  { id: 2, ref: 'DEV-002', title: 'Devis rénovation salle de bain', client: 'Paul Martin', provider: 'Sophie Vidal', serviceType: 'travaux', createdAt: '8 mai', validUntil: '8 juin', status: 'waiting_client_response',
-    items: [
-      { id: 1, label: 'Démolition + évacuation', quantity: 1, unitPrice: 1800, tvaRate: 10 },
-      { id: 2, label: 'Plomberie + carrelage',    quantity: 1, unitPrice: 5200, tvaRate: 10 },
-      { id: 3, label: 'Menuiserie + finitions',   quantity: 1, unitPrice: 3400, tvaRate: 10 },
-    ]},
-  { id: 3, ref: 'DEV-003', title: 'Devis aide à domicile — forfait mensuel', client: 'Nadia Benali', provider: 'KB Assistance', serviceType: 'aide', createdAt: '7 mai', validUntil: '7 juin', status: 'quote_rejected_by_client',
-    rejectionReason: 'Tarif trop élevé par rapport au budget disponible.',
-    items: [{ id: 1, label: '4h × 4 semaines (ménage, courses)', quantity: 16, unitPrice: 22, tvaRate: 5.5 }]},
-  { id: 4, ref: 'DEV-004', title: 'Devis courtage immobilier', client: 'Thomas Mercier', provider: 'Batinnov Courtage', serviceType: 'courtage', createdAt: '12 mai', validUntil: '12 juin', status: 'sent',
-    items: [{ id: 1, label: 'Honoraires courtage (1,2 % du financement)', quantity: 1, unitPrice: 3600, tvaRate: 20 }]},
-  { id: 5, ref: 'DEV-005', title: 'Devis réfection toiture + isolation', client: 'Claire Fontaine', provider: 'Vidal Rénov', serviceType: 'travaux', createdAt: '5 mai', validUntil: '5 juin', status: 'admin_approved',
-    items: [
-      { id: 1, label: 'Dépose ancienne toiture',  quantity: 1, unitPrice: 3200, tvaRate: 10 },
-      { id: 2, label: 'Pose nouvelle couverture', quantity: 1, unitPrice: 8500, tvaRate: 10 },
-      { id: 3, label: 'Isolation combles',         quantity: 1, unitPrice: 4800, tvaRate: 5.5 },
-    ]},
-];
+const initQuotes: AdminQuote[] = [];
 
 /* ── Données statiques ── */
-const initUtilisateurs = [
-  { id: 1, nom: 'Jean Dupont',   email: 'jean.dupont@email.com',  phone: '+33 6 11 22 33 44', role: 'client', ville: 'Clermont-Ferrand', statut: 'actif',     cree: '12 avr.', depense: '4 280 €', nbDemandes: 3 },
-  { id: 2, nom: 'Marc Leroy',    email: 'contact@leroy-elec.fr',  phone: '+33 6 55 77 88 99', role: 'pro',    ville: 'Clermont-Ferrand', statut: 'actif',     cree: '8 avr.',  depense: '—',       nbDemandes: 0 },
-  { id: 3, nom: 'Nadia Benali',  email: 'nadia.benali@email.com', phone: '+33 7 22 44 66 88', role: 'client', ville: 'Riom',             statut: 'actif',     cree: '15 avr.', depense: '96 €',    nbDemandes: 1 },
-  { id: 4, nom: 'Sophie Vidal',  email: 'contact@vidal-renov.fr', phone: '+33 6 88 99 11 22', role: 'pro',    ville: 'Issoire',          statut: 'en_attente',cree: '3 mai',   depense: '—',       nbDemandes: 0 },
-  { id: 5, nom: 'Paul Martin',   email: 'paul.martin@email.com',  phone: '+33 6 44 66 88 00', role: 'client', ville: 'Chamalières',      statut: 'actif',     cree: '20 avr.', depense: '3 800 €', nbDemandes: 2 },
-  { id: 6, nom: 'Éric Boudon',   email: 'e.boudon@email.com',     phone: '+33 6 77 33 55 11', role: 'client', ville: 'Riom',             statut: 'actif',     cree: '1 mai',   depense: '2 100 €', nbDemandes: 1 },
-  { id: 7, nom: 'Karim Bensaid', email: 'k.bensaid@kbassist.fr',  phone: '+33 6 22 88 44 66', role: 'pro',    ville: 'Clermont-Ferrand', statut: 'actif',     cree: '4 mai',   depense: '—',       nbDemandes: 0 },
-];
+const initUtilisateurs: any[] = [];
 
 const activiteRecente = [
   { id: 1, texte: 'Nouveau client inscrit : Paul Martin', temps: 'il y a 8 min', color: '#10B981' },
@@ -136,22 +105,9 @@ const monthlyCA = [
   { mois: 'Mai', montant: 14300 },
 ];
 
-const initialDossiers = [
-  { id: 1, nom: 'Vidal Rénov', contact: 'Sophie Vidal', ville: 'Issoire', date: '03 mai, 12:00', statut: 'a_verifier', docs: [
-    { nom: 'Extrait Kbis', statut: 'valide', taille: 'PDF · 180 Ko' },
-    { nom: 'Assurance décennale', statut: 'en_attente', taille: 'PDF · 620 Ko' },
-    { nom: 'Certification Qualibat', statut: 'valide', taille: 'PDF · valide jusqu\'en 2027' },
-  ]},
-  { id: 2, nom: 'KB Assistance', contact: 'Karim Bensaid', ville: 'Clermont-Ferrand', date: '04 mai, 17:20', statut: 'a_verifier', docs: [
-    { nom: 'Extrait Kbis', statut: 'valide', taille: 'PDF · 210 Ko' },
-    { nom: 'Assurance décennale', statut: 'en_attente', taille: 'PDF · 540 Ko' },
-  ]},
-  { id: 3, nom: 'Aline Paysage', contact: 'Aline Morel', ville: 'Riom', date: '05 mai, 10:45', statut: 'a_verifier', docs: [
-    { nom: 'Extrait Kbis', statut: 'en_attente', taille: 'PDF · 95 Ko' },
-  ]},
-];
+const initialDossiers: any[] = [];
 
-const services = [
+const services_UNUSED_STATIC = [
   {
     id: 1, ref: 'IRVE · #P1', titre: 'Installation borne Wallbox 7.4 kW',
     client: 'Jean Dupont', pro: 'Marc Leroy', ville: 'Clermont-Ferrand',
@@ -219,17 +175,9 @@ const services = [
   },
 ];
 
-const factures = [
-  { id: 1, ref: 'F2026-0341', montant: '1 428 €', client: 'Jean Dupont', pro: 'Leroy Électricité', statut: 'paye', date: '20 avr.' },
-  { id: 2, ref: 'F2026-0348', montant: '3 800 €', client: 'Paul Martin', pro: 'Vidal Rénov', statut: 'attente', date: '25 avr.' },
-  { id: 3, ref: 'F2026-0352', montant: '96 €', client: 'Nadia Benali', pro: 'KB Assistance', statut: 'retard', date: '28 avr.' },
-];
+const factures: any[] = [];
 
-const initialRdvs = [
-  { id: 1, titre: 'Clarifier le périmètre avant devis définitif', client: 'Paul Martin',  pro: 'Sophie Vidal',   date: '20 mai', heure: '10h00', adresse: '15 rue des Acacias, Chamalières', tag: 'Créneaux client', statut: 'a_coordonner' },
-  { id: 2, titre: 'Mise en service de la borne',                  client: 'Jean Dupont',  pro: 'Marc Leroy',     date: '21 mai', heure: '14h30', adresse: '12 rue des Fleurs, Clermont-Fd',  tag: 'Retour pro',      statut: 'a_coordonner' },
-  { id: 3, titre: 'Premier rendez-vous SAP',                      client: 'Nadia Benali', pro: 'KB Assistance',  date: '18 mai', heure: '09h00', adresse: '4 rue Pascal, Riom',              tag: 'Validé',          statut: 'valide' },
-];
+const initialRdvs: any[] = [];
 
 /* ── Leads ── */
 type LeadStatus = 'new' | 'contacted' | 'to_follow_up' | 'qualified' | 'unqualified' | 'converted' | 'lost';
@@ -297,16 +245,7 @@ const PRIORITY_FILTERS_LEAD = [
   { value: 'low',    label: 'Basse' },
 ];
 
-const initLeads: Lead[] = [
-  { id: 1, name: 'Thomas Mercier',    email: 'thomas.mercier@email.com', phone: '+33 6 11 22 33 44', source: 'website',      status: 'new',          priority: 'urgent', serviceType: 'IRVE',     city: 'Clermont-Ferrand', createdAt: '13 mai', notes: 'Veut une borne 22 kW pour son garage',              estimatedValue: 2800  },
-  { id: 2, name: 'Claire Fontaine',   email: 'claire.fontaine@email.com',phone: '+33 6 22 33 44 55', source: 'referral',     status: 'contacted',    priority: 'high',   serviceType: 'Travaux',  city: 'Vichy',            createdAt: '12 mai', notes: 'Rénovation cuisine + salle de bain',                estimatedValue: 15000 },
-  { id: 3, name: 'Antoine Leclerc',   email: 'a.leclerc@entreprise.fr',  phone: '+33 6 33 44 55 66', source: 'partner',      status: 'qualified',    priority: 'high',   serviceType: 'Courtage', city: 'Riom',             createdAt: '11 mai', notes: "Projet d'achat immobilier avec rénovation",         estimatedValue: 8000  },
-  { id: 4, name: 'Isabelle Rousseau', email: 'i.rousseau@email.com',     phone: '+33 6 44 55 66 77', source: 'phone',        status: 'to_follow_up', priority: 'normal', serviceType: 'Aide',     city: 'Issoire',          createdAt: '10 mai', notes: "Demande d'aide à domicile pour parent âgé",         estimatedValue: 500   },
-  { id: 5, name: 'Julien Perrin',     email: 'julien.perrin@email.com',  phone: '+33 6 55 66 77 88', source: 'social_media', status: 'converted',    priority: 'normal', serviceType: 'IRVE',     city: 'Thiers',           createdAt: '8 mai',  notes: 'Déjà converti, borne Wallbox 7.4kW',                estimatedValue: 1900  },
-  { id: 6, name: 'Marie-Hélène Blanc',email: 'mh.blanc@email.com',       phone: '+33 6 66 77 88 99', source: 'email',        status: 'unqualified',  priority: 'low',    serviceType: 'Travaux',  city: 'Ambert',           createdAt: '7 mai',  notes: 'Budget insuffisant pour le projet',                  estimatedValue: 0     },
-  { id: 7, name: 'Fabrice Girard',    email: 'f.girard@societe.fr',      phone: '+33 6 77 88 99 00', source: 'event',        status: 'new',          priority: 'high',   serviceType: 'Courtage', city: 'Brioude',          createdAt: '13 mai', notes: "Rencontré au salon de l'habitat",                    estimatedValue: 6000  },
-  { id: 8, name: 'Sandrine Moreau',   email: 's.moreau@email.com',       phone: '+33 6 88 99 00 11', source: 'website',      status: 'lost',         priority: 'low',    serviceType: 'Aide',     city: 'Clermont-Ferrand', createdAt: '5 mai',  notes: 'Pas de suite donnée après 3 relances',               estimatedValue: 0     },
-];
+const initLeads: Lead[] = [];
 
 /* ── Demandes admin ── */
 type DemandeStage = 'received' | 'admin_validation' | 'quotes_sent' | 'client_decision' | 'payment';
@@ -355,13 +294,37 @@ const SERVICE_FILTERS_ADMIN: { value: ServiceTypeAdmin; label: string }[] = [
   { value: 'courtage', label: 'Courtage' },
 ];
 
-const initDemandes: DemandeAdmin[] = [
-  { id: 1, ref: 'DEM-001', title: 'Installation borne IRVE 7,4 kW',    client: 'Jean Dupont',    serviceType: 'irve',     city: 'Clermont-Ferrand', stage: 'quotes_sent',      createdAt: '10 mai', amount: 1900  },
-  { id: 2, ref: 'DEM-002', title: 'Rénovation salle de bain complète', client: 'Paul Martin',    serviceType: 'travaux',  city: 'Chamalières',      stage: 'client_decision',  createdAt: '8 mai',  amount: 12500 },
-  { id: 3, ref: 'DEM-003', title: 'Aide à domicile hebdomadaire',      client: 'Nadia Benali',   serviceType: 'aide',     city: 'Riom',             stage: 'admin_validation', createdAt: '12 mai', amount: 480   },
-  { id: 4, ref: 'DEM-004', title: 'Courtage prêt immobilier',          client: 'Thomas Mercier', serviceType: 'courtage', city: 'Vichy',            stage: 'received',         createdAt: '13 mai', amount: 5000  },
-  { id: 5, ref: 'DEM-005', title: 'Réfection toiture + isolation',     client: 'Claire Fontaine',serviceType: 'travaux',  city: 'Vichy',            stage: 'payment',          createdAt: '5 mai',  amount: 18000 },
-];
+const initDemandes: DemandeAdmin[] = [];
+
+/* ── Helpers de mapping backend → frontend ── */
+function mapDomaine(d: string | undefined): 'travaux' | 'irve' | 'aide' | 'courtage' {
+  if (d === 'irve') return 'irve';
+  if (d === 'service_personne') return 'aide';
+  if (d === 'courtage') return 'courtage';
+  return 'travaux';
+}
+function mapDemandeStage(s: string): DemandeStage {
+  const m: Record<string, DemandeStage> = {
+    recue: 'received', en_qualification: 'admin_validation', validee: 'quotes_sent',
+    devis_emis: 'quotes_sent', signee: 'client_decision', payee: 'payment', terminee: 'payment', annulee: 'received',
+  };
+  return m[s] ?? 'received';
+}
+function mapDevisStatus(s: string): QuoteStatusAdmin {
+  if (s === 'brouillon') return 'draft';
+  if (s === 'envoye') return 'sent';
+  if (s === 'accepte') return 'accepted_by_client';
+  if (s === 'refuse') return 'quote_rejected_by_client';
+  if (s === 'expire') return 'expired';
+  return 'sent';
+}
+function mapProspectStatus(s: string): string {
+  if (s === 'nouveau') return 'new';
+  if (s === 'contacte') return 'contacted';
+  if (s === 'qualifie') return 'qualified';
+  if (s === 'perdu') return 'lost';
+  return 'new';
+}
 
 export default function DashboardAdmin() {
   const [page, setPage] = useState('accueil');
@@ -371,8 +334,10 @@ export default function DashboardAdmin() {
   const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
   const [factureFilter, setFactureFilter] = useState('tous');
   const [selectedDossierId, setSelectedDossierId] = useState<number | null>(null);
-  const [dossiers, setDossiers] = useState(initialDossiers.map(d => ({ ...d, docs: d.docs.map(doc => ({ ...doc })) })));
-  const [rdvList, setRdvList] = useState(initialRdvs.map(r => ({ ...r })));
+  const [dossiers, setDossiers] = useState<any[]>(initialDossiers);
+  const [rdvList, setRdvList] = useState<any[]>(initialRdvs);
+  const [services, setServices] = useState<any[]>([]);
+  const [adminFactures, setAdminFactures] = useState<any[]>(factures);
   const [utilisateurs, setUtilisateurs] = useState(initUtilisateurs);
   const [notif, setNotif] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [leadStatusFilter, setLeadStatusFilter] = useState('all');
@@ -524,7 +489,7 @@ export default function DashboardAdmin() {
   });
 
   const filteredServices = serviceFilter === 'tous' ? services : services.filter(s => s.statut === serviceFilter);
-  const filteredFactures = factureFilter === 'tous' ? factures : factures.filter(f => f.statut === factureFilter);
+  const filteredFactures = factureFilter === 'tous' ? adminFactures : adminFactures.filter(f => f.statut === factureFilter);
   const filteredDossiers = validationFilter === 'tous' ? dossiers : validationFilter === 'a_verifier' ? dossiersEnAttente : dossiers.filter(d => d.statut === validationFilter);
   const selectedUser = selectedUserId ? utilisateurs.find(u => u.id === selectedUserId) ?? null : null;
   const quotesAccepteesNonActees = quotes.filter(q => q.status === 'accepted_by_client');
@@ -566,6 +531,153 @@ export default function DashboardAdmin() {
     setSelectedUserId(null);
     setShowRdvCreate(false);
   };
+
+  /* ── Fetch données réelles ── */
+  const fetchAdminData = useCallback(async () => {
+    try {
+      /* Utilisateurs : clients + prestataires */
+      const [clientsRaw, presRaw] = await Promise.allSettled([clientsAPI.getAll(), prestatairesAPI.getAll()]);
+      const clientsList = clientsRaw.status === 'fulfilled' && Array.isArray(clientsRaw.value) ? clientsRaw.value : [];
+      const presList    = presRaw.status === 'fulfilled' && Array.isArray(presRaw.value) ? presRaw.value : [];
+      const allUsers = [
+        ...clientsList.map((c: any) => ({
+          id:         c.id, nom: `${c.prenom ?? ''} ${c.nom ?? ''}`.trim() || c.email,
+          email:      c.utilisateur?.email ?? c.email ?? '—',
+          phone:      c.telephone ?? '—',
+          role:       'client', ville: c.ville ?? '—',
+          statut:     c.supprimeLe ? 'suspendu' : 'actif',
+          cree:       normalizeDate(c.creeLe), depense: '—', nbDemandes: 0,
+        })),
+        ...presList.map((p: any) => ({
+          id:         p.id, nom: p.raisonSociale ?? `${p.prenom ?? ''} ${p.nom ?? ''}`.trim(),
+          email:      p.utilisateur?.email ?? p.email ?? '—',
+          phone:      p.telephone ?? '—',
+          role:       'pro', ville: p.ville ?? '—',
+          statut:     p.statut === 'valide' ? 'actif' : p.statut === 'suspendu' ? 'suspendu' : 'en_attente',
+          cree:       normalizeDate(p.creeLe), depense: '—', nbDemandes: 0,
+        })),
+      ];
+      setUtilisateurs(allUsers);
+
+      /* Dossiers prestataires à valider */
+      const presAValider = presList.filter((p: any) => p.statut === 'en_attente' || p.statut === 'en_verification');
+      setDossiers(presAValider.map((p: any) => ({
+        id:      p.id, nom: p.raisonSociale ?? '—',
+        contact: `${p.prenom ?? ''} ${p.nom ?? ''}`.trim() || '—',
+        ville:   p.ville ?? '—',
+        date:    normalizeDate(p.creeLe),
+        statut:  p.statut === 'valide' ? 'valide' : p.statut === 'refuse' ? 'refuse' : 'a_verifier',
+        docs:    [],
+      })));
+
+      /* Demandes */
+      try {
+        const raw = await demandesAPI.list();
+        const list = Array.isArray(raw) ? raw : [];
+        setDemandes(list.map((d: any) => ({
+          id:          d.id, ref: d.id?.slice(0,8)?.toUpperCase() ?? 'DEM',
+          title:       d.typePrestation?.libelle ?? d.description?.slice(0,60) ?? 'Demande',
+          client:      `${d.client?.prenom ?? ''} ${d.client?.nom ?? ''}`.trim() || '—',
+          serviceType: mapDomaine(d.typePrestation?.domaine),
+          city:        d.villeIntervention ?? '—',
+          stage:       mapDemandeStage(d.statut),
+          createdAt:   normalizeDate(d.creeLe),
+          amount:      d.montantEstime ?? undefined,
+        })));
+      } catch {}
+
+      /* Devis */
+      try {
+        const raw = await devisAPI.getAll();
+        const list = Array.isArray(raw) ? raw : [];
+        setQuotes(list.map((q: any) => ({
+          id:        q.id, ref: q.numero ?? q.id?.slice(0,8)?.toUpperCase(),
+          title:     q.objet ?? 'Devis',
+          client:    `${q.client?.prenom ?? ''} ${q.client?.nom ?? ''}`.trim() || '—',
+          provider:  q.prestataire?.raisonSociale ?? '—',
+          serviceType: mapDomaine(q.typePrestation?.domaine ?? 'travaux'),
+          createdAt: normalizeDate(q.dateEmission), validUntil: normalizeDate(q.dateEmission),
+          status:    mapDevisStatus(q.statut),
+          items:     (q.lignes ?? []).map((l: any) => ({ id: l.id, label: l.designation, quantity: l.quantite, unitPrice: l.puHt, tvaRate: l.tauxTva })),
+        })));
+      } catch {}
+
+      /* RDVs */
+      try {
+        const raw = await rendezVousAPI.list();
+        const list = Array.isArray(raw) ? raw : [];
+        setRdvList(list.map((r: any) => {
+          const d = r.dateDebut ? new Date(r.dateDebut) : null;
+          return {
+            id:      r.id,
+            titre:   r.notes ?? r.type ?? 'Rendez-vous',
+            client:  `${r.client?.prenom ?? ''} ${r.client?.nom ?? ''}`.trim() || '—',
+            pro:     r.prestataire?.raisonSociale ?? '—',
+            date:    d ? d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—',
+            heure:   d ? d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
+            adresse: r.lieu ?? '—',
+            tag:     r.statut === 'confirme' ? 'Validé' : 'À coordonner',
+            statut:  r.statut === 'confirme' || r.statut === 'realise' ? 'valide' : 'a_coordonner',
+          };
+        }));
+      } catch {}
+
+      /* Services / prestations */
+      try {
+        const raw = await prestationsAPI.getAll();
+        const list = Array.isArray(raw) ? raw : [];
+        setServices(list.map((p: any) => ({
+          id:          p.id,
+          ref:         `${mapDomaine(p.ligneDevis?.typePrestation?.domaine)?.toUpperCase() ?? 'SRV'} · #${p.id?.slice(0,6)}`,
+          titre:       p.ligneDevis?.designation ?? 'Prestation',
+          client:      `${p.client?.prenom ?? ''} ${p.client?.nom ?? ''}`.trim() || '—',
+          pro:         p.prestataire?.raisonSociale ?? '—',
+          ville:       p.villeIntervention ?? '—',
+          address:     `${p.adresseIntervention ?? ''}, ${p.codePostalIntervention ?? ''} ${p.villeIntervention ?? ''}`.trim(),
+          serviceType: mapDomaine(p.ligneDevis?.typePrestation?.domaine),
+          statut:      p.statut === 'terminee' ? 'livre' : p.statut === 'en_cours' ? 'en_cours' : p.statut === 'annulee' ? 'bloque' : 'a_demarrer',
+          progress:    p.statut === 'terminee' ? 100 : p.statut === 'en_cours' ? 50 : 0,
+          nextStep:    '—', nextDate: normalizeDate(p.datePrevue),
+          steps:       [], photos: [],
+        })));
+      } catch {}
+
+      /* Factures / paiements admin */
+      try {
+        const raw = await paiementsAPI.getAll();
+        const list = Array.isArray(raw) ? raw : [];
+        setAdminFactures(list.map((p: any) => ({
+          id:      p.id, ref: p.reference ?? `F${p.id?.slice(0,8)}`,
+          montant: normalizeMontant(p.montant),
+          client:  `${p.devis?.client?.prenom ?? ''} ${p.devis?.client?.nom ?? ''}`.trim() || '—',
+          pro:     p.devis?.prestataire?.raisonSociale ?? '—',
+          statut:  p.statut === 'paye' ? 'paye' : p.statut === 'echoue' ? 'retard' : 'attente',
+          date:    normalizeDate(p.datePaiement ?? p.creeLe),
+        })));
+      } catch {}
+
+      /* Leads / prospects */
+      try {
+        const raw = await prospectsAPI.getAll();
+        const list = Array.isArray(raw) ? raw : [];
+        setLeads(list.map((p: any) => ({
+          id:             p.id, name: `${p.prenom ?? ''} ${p.nom ?? ''}`.trim() || '—',
+          email:          p.email ?? '—', phone: p.telephone ?? '—',
+          source:         (p.source as LeadSource) ?? 'other',
+          status:         mapProspectStatus(p.statut) as LeadStatus,
+          priority:       'normal' as LeadPriority,
+          serviceType:    '—', city: '—',
+          createdAt:      normalizeDate(p.creeLe), notes: p.messageInitial ?? '',
+          estimatedValue: 0,
+        })));
+      } catch {}
+
+    } catch (err: any) {
+      console.error('[DashboardAdmin] fetchData:', err.message);
+    }
+  }, []);
+
+  useEffect(() => { fetchAdminData(); }, [fetchAdminData]);
 
   return (
     <div className="admin-layout">

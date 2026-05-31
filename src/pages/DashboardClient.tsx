@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { authAPI, demandesAPI, devisAPI, paiementsAPI, conversationsAPI, rendezVousAPI, notificationsAPI, normalizeDate, normalizeMontant } from '../services/api';
 import './DashboardClient.css';
 
 // ─── Notifications ────────────────────────────────────────────────────────────
@@ -25,13 +26,7 @@ const NOTIF_FILTERS_CLIENT = [
   { id: 'job_update',label: 'Chantiers' },
 ];
 
-const initClientNotifs: { id: string; type: NotifType; title: string; body: string; createdAt: string; read: boolean }[] = [
-  { id: 'n1', type: 'message',    title: 'Nouveau message de Marc Dupont',  body: "Bonjour, je suis disponible le 15 mai pour l'installation de votre borne.",            createdAt: new Date(Date.now() - 5*60000).toISOString(),      read: false },
-  { id: 'n2', type: 'quote',      title: 'Devis reçu — Wallbox 7.4 kW',     body: "Sophie Bernard vous a envoyé un nouveau devis de 1 600 €. Consultez-le pour l'accepter.", createdAt: new Date(Date.now() - 2*3600000).toISOString(),    read: false },
-  { id: 'n3', type: 'rdv',        title: 'RDV confirmé — 2 mai à 14h',      body: 'Votre rendez-vous de mise en service avec Marc Leroy est confirmé.',                   createdAt: new Date(Date.now() - 24*3600000).toISOString(),   read: true  },
-  { id: 'n4', type: 'document',   title: 'Contrat disponible à signer',      body: "Votre contrat d'installation IRVE est prêt. Signez-le pour démarrer les travaux.",     createdAt: new Date(Date.now() - 2*24*3600000).toISOString(), read: true  },
-  { id: 'n5', type: 'job_update', title: 'Avancement chantier mis à jour',   body: "L'étape \"Raccordement\" vient d'être validée sur votre installation IRVE Wallbox.",   createdAt: new Date(Date.now() - 3*24*3600000).toISOString(), read: true  },
-];
+const initClientNotifs: { id: string; type: NotifType; title: string; body: string; createdAt: string; read: boolean }[] = [];
 
 function formatRelative(iso: string): string {
   const d = new Date(iso);
@@ -116,53 +111,39 @@ const INVOICE_FILTERS = [
   { id: 'cancelled', label: 'Annulées' },
 ];
 
-const initInvoices: Invoice[] = [
-  {
-    id: 'f1', number: 'FAC-2026-0042', status: 'sent',
-    label: 'Installation borne Wallbox 7.4 kW', issuedAt: '18 avr. 2026',
-    amountHT: 1333.33, tva: 20, amountTTC: 1600,
-    items: [
-      { label: 'Fourniture et pose borne Wallbox 7.4 kW', qty: 1, unitHT: 950, tva: 20 },
-      { label: 'Câblage et tableau électrique', qty: 1, unitHT: 320, tva: 20 },
-      { label: 'Mise en service et tests', qty: 1, unitHT: 63.33, tva: 20 },
-    ],
-    chantier: 'IRVE',
-  },
-  {
-    id: 'f2', number: 'FAC-2026-0031', status: 'paid',
-    label: 'Diagnostic électrique initial', issuedAt: '10 avr. 2026',
-    amountHT: 125, tva: 20, amountTTC: 150,
-    items: [
-      { label: 'Diagnostic installation électrique', qty: 1, unitHT: 100, tva: 20 },
-      { label: 'Rapport écrit', qty: 1, unitHT: 25, tva: 20 },
-    ],
-    chantier: 'IRVE',
-  },
-  {
-    id: 'f3', number: 'FAC-2026-0018', status: 'overdue',
-    label: 'Acompte rénovation salle de bain', issuedAt: '1 avr. 2026',
-    amountHT: 2500, tva: 10, amountTTC: 2750,
-    items: [
-      { label: 'Acompte 30% — Rénovation salle de bain', qty: 1, unitHT: 2500, tva: 10 },
-    ],
-    chantier: 'Rénovation',
-  },
-  {
-    id: 'f4', number: 'FAC-2026-0009', status: 'draft',
-    label: 'Dressing sur-mesure', issuedAt: '28 mars 2026',
-    amountHT: 3200, tva: 20, amountTTC: 3840,
-    items: [
-      { label: 'Conception et fabrication dressing sur-mesure', qty: 1, unitHT: 2800, tva: 20 },
-      { label: 'Pose et installation', qty: 1, unitHT: 400, tva: 20 },
-    ],
-    chantier: 'Aménagement',
-  },
-];
+const initInvoices: Invoice[] = [];
+
+/* ── Helpers de mapping backend→frontend ── */
+function mapBackendStatusToStage(s: string): DemandeStage {
+  const m: Record<string, DemandeStage> = {
+    recue: 'en_attente', en_qualification: 'validation', validee: 'validation',
+    devis_emis: 'propositions', signee: 'a_payer', payee: 'en_chantier', terminee: 'termine', annulee: 'termine',
+    // app mobile format
+    waiting_admin_validation: 'validation', propositions: 'propositions',
+    a_signer: 'a_signer', a_payer: 'a_payer', en_chantier: 'en_chantier', termine: 'termine',
+  };
+  return m[s] ?? 'en_attente';
+}
+function mapPaymentStatus(s: string): Invoice['status'] {
+  if (s === 'paye' || s === 'succeeded') return 'paid';
+  if (s === 'echoue' || s === 'failed') return 'cancelled';
+  if (s === 'rembourse' || s === 'refunded') return 'cancelled';
+  return 'sent';
+}
+function mapNotifType(t: string): NotifType {
+  if (t?.includes('message')) return 'message';
+  if (t?.includes('devis') || t?.includes('quote')) return 'quote';
+  if (t?.includes('rdv') || t?.includes('rendez')) return 'rdv';
+  if (t?.includes('document')) return 'document';
+  if (t?.includes('prestation') || t?.includes('chantier')) return 'job_update';
+  if (t?.includes('paiement') || t?.includes('payment')) return 'payment';
+  return 'message';
+}
 
 function DashboardClient() {
   const [activePage, setActivePage] = useState('accueil');
   const [menuOpen, setMenuOpen] = useState(false);
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const handleLogout = () => { logout(); navigate('/'); };
 
@@ -172,21 +153,24 @@ function DashboardClient() {
     setTimeout(() => setNotif(null), 3200);
   };
 
-  const client = {
-    prenom: 'Marie',
-    nom: 'Laurent',
-    email: 'marie.laurent@email.fr',
-    telephone: '06 12 34 56 78',
-    adresse: '12 rue des Lilas, 63000 Clermont-Ferrand',
-    avatar: 'ML'
-  };
+  /* ── Loading ── */
+  const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState('');
 
+  /* ── Profil (depuis /auth/me) ── */
   const [clientForm, setClientForm] = useState({
-    prenom: 'Marie', nom: 'Laurent',
-    email: 'marie.laurent@email.fr',
-    telephone: '06 12 34 56 78',
-    adresse: '12 rue des Lilas, 63000 Clermont-Ferrand'
+    prenom: user?.prenom ?? '', nom: user?.nom ?? '',
+    email: user?.email ?? '',
+    telephone: '', adresse: ''
   });
+
+  const client = {
+    prenom: clientForm.prenom, nom: clientForm.nom,
+    email: clientForm.email,
+    telephone: clientForm.telephone,
+    adresse: clientForm.adresse,
+    avatar: clientForm.prenom[0]?.toUpperCase() + (clientForm.nom[0]?.toUpperCase() ?? '')
+  };
 
   const [autoSign, setAutoSign] = useState(false);
   const [showSigModal, setShowSigModal] = useState(false);
@@ -202,19 +186,14 @@ function DashboardClient() {
   const handleMarkAllRead = () =>
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
 
-  const [invoices] = useState<Invoice[]>(initInvoices);
+  const [invoices, setInvoices] = useState<Invoice[]>(initInvoices);
   const [invoiceFilter, setInvoiceFilter] = useState('toutes');
   const [selectedInvoice, setSelectedInvoice] = useState<string | null>(null);
 
   const [selectedChantier, setSelectedChantier] = useState<number | null>(null);
   const [chantierDocsOpen, setChantierDocsOpen] = useState(false);
 
-  const [demandes] = React.useState<DemandeRiche[]>([
-    { id: 1, service: 'Rénovation',       sousService: 'Rénovation salle de bain',      stage: 'en_chantier',  date: '2 mai 2026',   devis: 3, budget: '5 000 € - 15 000 €', artisanAccepte: 'Sophie Vidal',  montantAccepte: '8 500 €', chantierRef: 2 },
-    { id: 2, service: 'Borne IRVE',        sousService: 'Wallbox 11kW',                  stage: 'propositions', date: '28 avr. 2026', devis: 2, budget: '1 000 € - 5 000 €' },
-    { id: 3, service: 'Aménagement',       sousService: 'Dressing sur-mesure',           stage: 'termine',      date: '10 avr. 2026', devis: 1, budget: '1 000 € - 5 000 €', artisanAccepte: 'Pierre Morel', montantAccepte: '3 840 €', chantierRef: 4 },
-    { id: 4, service: 'Aide à la personne',sousService: 'Adaptation salle de bain PMR',  stage: 'a_signer',     date: '15 mai 2026',  devis: 2, budget: '2 000 € - 8 000 €' },
-  ]);
+  const [demandes, setDemandes] = React.useState<DemandeRiche[]>([]);
 
   // ── Avis modal ──
   const [showAvisModal, setShowAvisModal]   = React.useState(false);
@@ -241,13 +220,10 @@ function DashboardClient() {
   }, []);
   const RDV_SLOTS = ['08:00','09:00','10:00','11:00','14:00','15:00','16:00','17:00','18:00'];
 
-  const [artisans, setArtisans] = useState([
-    { id: 1, nom: 'Marc Dupont',    metier: 'Électricien IRVE', note: 4.9, avis: 34, ville: 'Clermont-Ferrand', avatar: 'MD', montant: '1 450 €', montantNum: 1450, delai: '15 mai 2026', accepte: false, experience: '8 ans', garantie: '10 ans' },
-    { id: 2, nom: 'Sophie Bernard', metier: 'Plombière',         note: 4.7, avis: 21, ville: 'Aubière',          avatar: 'SB', montant: '1 600 €', montantNum: 1600, delai: '18 mai 2026', accepte: false, experience: '5 ans', garantie: '5 ans'  },
-    { id: 3, nom: 'Thierry Morel',  metier: 'Électricien',      note: 4.5, avis: 12, ville: 'Riom',             avatar: 'TM', montant: '1 380 €', montantNum: 1380, delai: '22 mai 2026', accepte: false, experience: '12 ans', garantie: '10 ans' },
-  ]);
+  const [artisans, setArtisans] = useState<any[]>([]);
 
-  const chantiers_detail: ChantierEnrichi[] = [
+  const [chantiers_detail, setChantiers_detail] = useState<ChantierEnrichi[]>([]);
+  const _UNUSED_chantiers_detail: ChantierEnrichi[] = [
     {
       id: 1, ref: '#CH-IR-2026-0042', service: 'IRVE',
       titre: 'Installation borne Wallbox 7.4 kW',
@@ -361,37 +337,9 @@ function DashboardClient() {
     },
   ];
 
-  const documents = [
-    { id: 1, nom: 'Contrat installation IRVE', type: 'Contrat', taille: '2.1 Mo', date: '18 avr. 2026', signe: true, chantier: 'IRVE' },
-    { id: 2, nom: 'Devis initial borne Wallbox', type: 'Devis', taille: '450 Ko', date: '14 avr. 2026', signe: false, chantier: 'IRVE' },
-    { id: 3, nom: 'Devis travaux rénovation', type: 'Devis', taille: '1.8 Mo', date: '10 avr. 2026', signe: false, chantier: 'Rénovation' },
-    { id: 4, nom: 'Facture acompte borne', type: 'Facture', taille: '380 Ko', date: '16 avr. 2026', signe: true, chantier: 'IRVE' }
-  ];
-
-  const [agenda, setAgenda] = useState([
-    { id: 1, heure: '14:00', titre: 'Mise en service de la borne', artisan: 'Marc Leroy', duree: '2h', statut: 'confirme', date: 'Ven. 2 mai' },
-    { id: 2, heure: '09:00', titre: 'Vérification tableau électrique', artisan: 'Marc Leroy', duree: '1h', statut: 'a_confirmer', date: 'Lun. 5 mai' }
-  ]);
-
-  const [conversations, setConversations] = useState([
-    {
-      id: 1, nom: 'Marc Dupont', avatar: 'MD', lu: false,
-      metier: 'Électricien IRVE', note: 4.9, service: 'Borne IRVE',
-      messages: [
-        { id: 1, texte: "Bonjour, je suis disponible le 15 mai pour l'installation.", de: 'eux', heure: '10:28', date: "Aujourd'hui" },
-        { id: 2, texte: "Pouvez-vous confirmer l'adresse exacte ?", de: 'eux', heure: '10:32', date: "Aujourd'hui" },
-      ]
-    },
-    {
-      id: 2, nom: 'Sophie Bernard', avatar: 'SB', lu: true,
-      metier: 'Plombière', note: 4.7, service: 'Rénovation salle de bain',
-      messages: [
-        { id: 1, texte: 'Voici mon devis détaillé pour votre salle de bain.', de: 'eux', heure: '14:10', date: 'Hier' },
-        { id: 2, texte: 'Merci Sophie, je regarde ça et reviens vers vous.', de: 'moi', heure: '14:45', date: 'Hier' },
-        { id: 3, texte: "Bien sûr ! N'hésitez pas si vous avez des questions.", de: 'eux', heure: '15:02', date: 'Hier' },
-      ]
-    }
-  ]);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [agenda, setAgenda] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<any[]>([]);
   const [selectedConv, setSelectedConv] = useState(null);
   const [draft, setDraft] = useState('');
   const [convSearch, setConvSearch] = useState('');
@@ -433,6 +381,138 @@ function DashboardClient() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversations, selectedConv]);
+
+  /* ── Fetch données réelles depuis l'API ── */
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setApiError('');
+    try {
+      /* Profil */
+      const me = await authAPI.me();
+      const profil = me?.profil ?? me;
+      setClientForm({
+        prenom:    profil?.prenom    ?? me?.prenom    ?? '',
+        nom:       profil?.nom       ?? me?.nom       ?? '',
+        email:     me?.email         ?? '',
+        telephone: profil?.telephone ?? '',
+        adresse:   [profil?.adresse, profil?.codePostal, profil?.ville].filter(Boolean).join(', '),
+      });
+
+      /* Demandes */
+      try {
+        const demandesRaw = await demandesAPI.listMine();
+        const adapted = (Array.isArray(demandesRaw) ? demandesRaw : []).map((d: any) => ({
+          id:             d.id,
+          service:        d.typePrestation?.libelle ?? d.domaine ?? 'Service',
+          sousService:    d.description?.slice(0, 60) ?? '',
+          stage:          mapBackendStatusToStage(d.statut ?? d.status),
+          date:           normalizeDate(d.creeLe ?? d.createdAt),
+          budget:         '—',
+          devis:          d.nbDevis ?? 0,
+          artisanAccepte: d.artisanAccepte,
+          montantAccepte: d.montantAccepte ? normalizeMontant(d.montantAccepte) : undefined,
+        }));
+        setDemandes(adapted);
+      } catch { /* laisse vide */ }
+
+      /* Devis reçus (artisans proposant un devis) */
+      try {
+        const devisRaw = await devisAPI.getAll();
+        const list = Array.isArray(devisRaw) ? devisRaw : [];
+        setArtisans(list.map((d: any, i: number) => ({
+          id:         d.id ?? i,
+          nom:        d.prestataire?.raisonSociale ?? d.prestataire?.nom ?? `Artisan ${i+1}`,
+          metier:     d.typePrestation?.libelle ?? 'Artisan',
+          note:       d.prestataire?.note ?? 4.5,
+          avis:       d.prestataire?.nbAvis ?? 0,
+          ville:      d.prestataire?.ville ?? '—',
+          avatar:     (d.prestataire?.raisonSociale ?? d.prestataire?.nom ?? 'A')[0]?.toUpperCase() ?? 'A',
+          montant:    normalizeMontant(d.totalTTC ?? d.total_ttc),
+          montantNum: d.totalTTC ?? d.total_ttc ?? 0,
+          delai:      normalizeDate(d.dateEmission ?? d.date_emission),
+          accepte:    d.statut === 'accepte' || d.status === 'accepted_by_client',
+          experience: '—',
+          garantie:   '—',
+        })));
+      } catch { /* laisse vide */ }
+
+      /* Factures / paiements */
+      try {
+        const paiementsRaw = await paiementsAPI.getAll();
+        const list = Array.isArray(paiementsRaw) ? paiementsRaw : [];
+        setInvoices(list.map((p: any) => ({
+          id:        p.id,
+          number:    p.reference ?? `PAY-${p.id?.slice(0,8)}`,
+          status:    mapPaymentStatus(p.statut ?? p.status),
+          label:     p.devis?.objet ?? p.label ?? 'Paiement',
+          issuedAt:  normalizeDate(p.datePaiement ?? p.date_paiement ?? p.creeLe),
+          amountHT:  p.montant ?? 0,
+          tva:       20,
+          amountTTC: p.montant ?? 0,
+          items:     [],
+          chantier:  p.devis?.demande?.typePrestation?.libelle ?? '—',
+        })));
+      } catch { /* laisse vide */ }
+
+      /* RDV / agenda */
+      try {
+        const rdvsRaw = await rendezVousAPI.list();
+        const list = Array.isArray(rdvsRaw) ? rdvsRaw : [];
+        setAgenda(list.map((r: any) => ({
+          id:      r.id,
+          heure:   r.dateDebut ? new Date(r.dateDebut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
+          date:    normalizeDate(r.dateDebut),
+          titre:   r.notes ?? r.type ?? 'Rendez-vous',
+          artisan: r.prestataire?.raisonSociale ?? r.admin?.prenom ?? '—',
+          duree:   r.dureeMinutes ? `${r.dureeMinutes}min` : '—',
+          statut:  r.statut ?? 'propose',
+        })));
+      } catch { /* laisse vide */ }
+
+      /* Conversations */
+      try {
+        const convsRaw = await conversationsAPI.list('client');
+        const list = Array.isArray(convsRaw) ? convsRaw : [];
+        setConversations(list.map((c: any) => ({
+          id:     c.id,
+          nom:    c.prestataire?.raisonSociale ?? c.prestataire?.nom ?? 'Contact',
+          avatar: (c.prestataire?.raisonSociale ?? c.prestataire?.nom ?? 'C')[0]?.toUpperCase() ?? 'C',
+          lu:     !c.nonLus || c.nonLus === 0,
+          metier: c.prestation?.typePrestation?.libelle ?? '—',
+          note:   c.prestataire?.note ?? 0,
+          service: c.sujet ?? '—',
+          messages: (c.messages ?? []).map((m: any) => ({
+            id:    m.id,
+            texte: m.contenu ?? '',
+            de:    m.expediteurId === me?.id ? 'moi' : 'eux',
+            heure: m.envoyeLe ? new Date(m.envoyeLe).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—',
+            date:  normalizeDate(m.envoyeLe),
+          })),
+        })));
+      } catch { /* laisse vide */ }
+
+      /* Notifications */
+      try {
+        const notifsRaw = await notificationsAPI.list();
+        const list = Array.isArray(notifsRaw) ? notifsRaw : [];
+        setNotifications(list.map((n: any) => ({
+          id:        n.id,
+          type:      mapNotifType(n.type),
+          title:     n.titre ?? n.title ?? 'Notification',
+          body:      n.contenu ?? n.body ?? '',
+          createdAt: n.creeLe ?? n.created_at ?? new Date().toISOString(),
+          read:      !!(n.lueLe ?? n.read),
+        })));
+      } catch { /* laisse vide */ }
+
+    } catch (err: any) {
+      setApiError(err.message ?? 'Erreur de connexion à l\'API');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const convActive = conversations.find(c => c.id === selectedConv);
   const filteredConvs = conversations.filter(c =>
@@ -504,6 +584,14 @@ function DashboardClient() {
     { id: 'messages',  label: 'Messages',  badge: conversations.filter(c => !c.lu).length },
     { id: 'agenda',    label: 'Agenda',    badge: agenda.filter(e => e.statut === 'a_confirmer').length },
   ];
+
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', flexDirection: 'column', gap: 16, background: '#F9FAF5' }}>
+      <div style={{ width: 40, height: 40, border: '3px solid #E5E7EB', borderTopColor: '#4A7A5C', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <p style={{ color: '#6B7280', fontSize: 14 }}>Chargement de votre espace…</p>
+      {apiError && <p style={{ color: '#DC2626', fontSize: 13, maxWidth: 360, textAlign: 'center' }}>{apiError}</p>}
+    </div>
+  );
 
   return (
     <div className="dashboard-client-layout">

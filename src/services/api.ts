@@ -1,6 +1,21 @@
 // Chemins relatifs partout : Vite proxy en dev, Vercel rewrites en prod
 const API_URL = '';
 
+/* ── Helpers de normalisation (backend → frontend) ── */
+export function normalizeDate(v: unknown): string {
+  if (!v) return '—';
+  const d = new Date(v as string);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+export function normalizeMontant(v: unknown): string {
+  if (v == null) return '—';
+  const n = typeof v === 'number' ? v : parseFloat(String(v));
+  if (isNaN(n)) return '—';
+  return `${n.toLocaleString('fr-FR')} €`;
+}
+
 export type UserRole = 'client' | 'prestataire' | 'admin';
 
 export interface User {
@@ -175,4 +190,84 @@ export const dashboardAPI = {
   getNotesPrestataires: async () => { const data = await r(await fetch(`${API_URL}/api/dashboard/notes-prestataires`, { headers: h() })); return data.data; },
   getPerformanceCampagnes: async () => { const data = await r(await fetch(`${API_URL}/api/dashboard/performance-campagnes`, { headers: h() })); return data.data; },
   getConversionParSource: async () => { const data = await r(await fetch(`${API_URL}/api/dashboard/conversion-par-source`, { headers: h() })); return data.data; }
+};
+
+// ── DEMANDES ──────────────────────────────────────────────────
+export const demandesAPI = {
+  list: async (filters: Record<string, string> = {}) => {
+    const qs = new URLSearchParams(filters).toString();
+    const data = await r(await fetch(`${API_URL}/api/demandes${qs ? '?' + qs : ''}`, { headers: h() }));
+    return data.data ?? [];
+  },
+  listMine: async () => {
+    // Le backend filtre automatiquement selon le JWT (client connecté)
+    const data = await r(await fetch(`${API_URL}/api/demandes/mes-demandes`, { headers: h() })).catch(() => ({ data: [] }));
+    return data.data ?? [];
+  },
+  getById: async (id: string) => { const data = await r(await fetch(`${API_URL}/api/demandes/${id}`, { headers: h() })); return data.data; },
+  create: async (body: Record<string, unknown>) => {
+    const data = await r(await fetch(`${API_URL}/api/demandes`, { method: 'POST', headers: h(), body: JSON.stringify(body) }));
+    return data.data;
+  },
+  updateStatut: async (id: string, statut: string) => {
+    const data = await r(await fetch(`${API_URL}/api/demandes/${id}`, { method: 'PATCH', headers: h(), body: JSON.stringify({ statut }) }));
+    return data.data;
+  },
+  qualifier: async (id: string, adminId: string) => {
+    const data = await r(await fetch(`${API_URL}/api/demandes/${id}/qualifier`, { method: 'POST', headers: h(), body: JSON.stringify({ adminId }) }));
+    return data.data;
+  },
+  valider: async (id: string) => {
+    const data = await r(await fetch(`${API_URL}/api/demandes/${id}/valider`, { method: 'POST', headers: h() }));
+    return data.data;
+  },
+  annuler: async (id: string) => {
+    const data = await r(await fetch(`${API_URL}/api/demandes/${id}/annuler`, { method: 'POST', headers: h() }));
+    return data.data;
+  },
+};
+
+// ── CONVERSATIONS ─────────────────────────────────────────────
+export const conversationsAPI = {
+  list: async (role: 'client' | 'pro' | 'admin' = 'client') => {
+    const data = await r(await fetch(`${API_URL}/api/conversations?role=${role}`, { headers: h() }));
+    return data.data ?? [];
+  },
+  getById: async (id: string) => { const data = await r(await fetch(`${API_URL}/api/conversations/${id}`, { headers: h() })); return data.data; },
+  listMessages: async (id: string) => { const data = await r(await fetch(`${API_URL}/api/conversations/${id}/messages`, { headers: h() })); return data.data ?? []; },
+  sendMessage: async (id: string, text: string) => {
+    const data = await r(await fetch(`${API_URL}/api/conversations/${id}/messages`, { method: 'POST', headers: h(), body: JSON.stringify({ text }) }));
+    return data.data;
+  },
+};
+
+// ── RENDEZ-VOUS ───────────────────────────────────────────────
+export const rendezVousAPI = {
+  list: async (filters: Record<string, string> = {}) => {
+    const qs = new URLSearchParams(filters).toString();
+    const data = await r(await fetch(`${API_URL}/api/rendez-vous${qs ? '?' + qs : ''}`, { headers: h() }));
+    return data.data ?? [];
+  },
+  create: async (body: Record<string, unknown>) => {
+    const data = await r(await fetch(`${API_URL}/api/rendez-vous`, { method: 'POST', headers: h(), body: JSON.stringify(body) }));
+    return data.data;
+  },
+  updateStatut: async (id: string, statut: string) => {
+    const data = await r(await fetch(`${API_URL}/api/rendez-vous/${id}`, { method: 'PATCH', headers: h(), body: JSON.stringify({ statut }) }));
+    return data.data;
+  },
+};
+
+// ── NOTIFICATIONS ─────────────────────────────────────────────
+export const notificationsAPI = {
+  list: async () => {
+    const data = await r(await fetch(`${API_URL}/api/notifications`, { headers: h() }));
+    return data.data ?? [];
+  },
+  markRead: async (id: string) => {
+    return r(await fetch(`${API_URL}/api/notifications/${id}/lue`, { method: 'PATCH', headers: h() }));
+  },
+  markAllRead: async () => {
+    return r(await fetch(`${API_URL}/api/notifications/tout-lire`, { method: 'PATCH', headers: h() }));
+  },
 };
