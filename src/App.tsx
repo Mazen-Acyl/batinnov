@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ScrollToTop from './components/ScrollToTop';
+import ProtectedRoute from './components/ProtectedRoute';
+import ChatBot from './components/ChatBot';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -9,19 +11,21 @@ import ConnexionPro from './pages/ConnexionPro';
 import InscriptionClient from './pages/InscriptionClient';
 import DashboardPro from './pages/DashboardPro';
 import DashboardClient from './pages/DashboardClient';
+import DashboardAdmin from './pages/DashboardAdmin';
 import ServiceDetail from './pages/ServiceDetail';
+import DemandeDevis from './pages/DemandeDevis';
 import MotDePasseOublie from './pages/MotDePasseOublie';
 import VerificationOTP from './pages/VerificationOTP';
 import FAQ from './pages/FAQ';
-import './index.css';
 import FormulaireIntelligent from './pages/FormulaireIntelligent';
 import VerifyEmail from './pages/VerifyEmail';
+import './index.css';
 
-//nothing
 function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <ChatBot />
       <Routes>
 
         {/* PAGES PUBLIQUES */}
@@ -33,6 +37,7 @@ function App() {
         <Route path="/services/:serviceId" element={<><Navbar /><ServiceDetail /><Footer /></>} />
         <Route path="/faq" element={<><Navbar /><FAQ /><Footer /></>} />
         <Route path="/demander-estimation" element={<><Navbar /><FormulaireIntelligent /><Footer /></>} />
+        <Route path="/devis" element={<DemandeDevis />} />
 
         {/* AUTH */}
         <Route path="/mot-de-passe-oublie" element={<><Navbar /><MotDePasseOublie /><Footer /></>} />
@@ -40,8 +45,9 @@ function App() {
         <Route path="/verify-email" element={<><Navbar /><VerifyEmail /><Footer /></>} />
 
         {/* DASHBOARDS */}
-        <Route path="/dashboard-pro" element={<DashboardPro />} />
-        <Route path="/dashboard-client" element={<DashboardClient />} />
+        <Route path="/dashboard-pro" element={<ProtectedRoute role="prestataire"><DashboardPro /></ProtectedRoute>} />
+        <Route path="/dashboard-client" element={<ProtectedRoute role="client"><DashboardClient /></ProtectedRoute>} />
+        <Route path="/dashboard-admin" element={<DashboardAdmin />} />
 
       </Routes>
     </BrowserRouter>

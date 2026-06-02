@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "batinnov",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

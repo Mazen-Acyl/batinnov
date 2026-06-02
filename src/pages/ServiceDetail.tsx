@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import './ServiceDetail.css';
 
@@ -100,19 +100,24 @@ const DELAIS = [
 ];
 
 function ServiceDetail() {
-  const { serviceId } = useParams();
+  const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
-  const service = SERVICES[serviceId];
+  const service = SERVICES[serviceId!];
 
   const [step, setStep] = useState(1);
   const TOTAL = 3;
+  const topRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    topRef.current?.scrollIntoView({ block: 'start', behavior: 'instant' });
+  }, [step]);
 
   const [form, setForm] = useState({
     sousService: '',
     description: '',
     budget: '',
     delai: '',
-    answers: {}
+    answers: {} as Record<string, string>
   });
 
   if (!service) {
@@ -159,6 +164,7 @@ function ServiceDetail() {
       </div>
 
       {/* FORMULAIRE */}
+      <div ref={topRef} />
       <div className="service-detail-body">
         <div className="container">
           <div className="service-form-wrapper">

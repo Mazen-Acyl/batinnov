@@ -1,8 +1,24 @@
-const API_URL = import.meta.env.VITE_API_URL || 'https://batinnov-api.onrender.com';
+// Chemins relatifs partout : Vite proxy en dev, Vercel rewrites en prod
+const API_URL = '';
 
-export const getToken = () => localStorage.getItem('batinnov_token');
-export const setToken = (t) => localStorage.setItem('batinnov_token', t);
-export const removeToken = () => localStorage.removeItem('batinnov_token');
+export type UserRole = 'client' | 'prestataire' | 'admin';
+
+export interface User {
+  id: number;
+  email: string;
+  role: UserRole;
+  prenom?: string;
+  nom?: string;
+}
+
+export interface AuthResult {
+  token: string;
+  user: User;
+}
+
+export const getToken = (): string | null => localStorage.getItem('batinnov_token');
+export const setToken = (t: string): void => localStorage.setItem('batinnov_token', t);
+export const removeToken = (): void => localStorage.removeItem('batinnov_token');
 
 const h = (auth = true) => {
   const headers = { 'Content-Type': 'application/json' };
@@ -11,8 +27,15 @@ const h = (auth = true) => {
 };
 
 const r = async (res) => {
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error?.message || 'Erreur API');
+  let data: any = null;
+  try { data = await res.json(); } catch { /* réponse vide */ }
+  if (!res.ok) {
+    const msg = data?.error?.message || data?.message || data?.error;
+    if (res.status === 401) throw new Error('Email ou mot de passe incorrect.');
+    if (res.status === 409) throw new Error('Un compte existe déjà avec ces informations.');
+    if (res.status === 0 || !res.status) throw new Error('Impossible de joindre le serveur. Vérifiez votre connexion.');
+    throw new Error(typeof msg === 'string' ? msg : 'Une erreur est survenue. Réessayez.');
+  }
   return data;
 };
 
@@ -43,6 +66,11 @@ export const authAPI = {
   verifyEmail: async (token) => {
     const data = await r(await fetch(`${API_URL}/api/auth/verify-email?token=${encodeURIComponent(token)}`, { method: 'GET', headers: h(false) }));
     return data;
+  },
+  loginGoogle: async (googleToken) => {
+    const data = await r(await fetch(`${API_URL}/api/auth/google`, { method: 'POST', headers: h(false), body: JSON.stringify({ googleToken }) }));
+    if (data?.data?.token) setToken(data.data.token);
+    return data.data;
   },
   logout: () => removeToken(),
   isAuthenticated: () => !!getToken()
