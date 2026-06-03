@@ -25,13 +25,7 @@ const NOTIF_FILTERS_PRO = [
   { id: 'review',        label: 'Avis' },
 ];
 
-const initProNotifs: { id: string; type: ProNotifType; title: string; body: string; createdAt: string; read: boolean }[] = [
-  { id: 'p1', type: 'quote_request', title: 'Nouveau lead — Wallbox 11kW Chamalières', body: "Antoine B. recherche un électricien IRVE. Budget estimé : 1 600 €. Répondez rapidement !", createdAt: new Date(Date.now() - 2*60000).toISOString(),       read: false },
-  { id: 'p2', type: 'message',       title: 'Message de Marie L.',                     body: "Bonjour, est-ce que vous pouvez venir mercredi matin ? La porte sera ouverte à 8h30.",  createdAt: new Date(Date.now() - 30*60000).toISOString(),      read: false },
-  { id: 'p3', type: 'payment',       title: 'Paiement reçu — 1 200 €',                 body: "Le paiement de Pierre R. pour la facture F-2026-005 a été validé.",                     createdAt: new Date(Date.now() - 3*3600000).toISOString(),     read: false },
-  { id: 'p4', type: 'job_update',    title: 'Chantier #P2 — statut mis à jour',        body: "Le chantier de Thomas D. (Wallbox 11kW Riom) a été marqué En cours.",                  createdAt: new Date(Date.now() - 24*3600000).toISOString(),    read: true  },
-  { id: 'p5', type: 'review',        title: 'Nouvel avis 5★ de Pierre R.',             body: "\"Très professionnel, installation rapide et soignée. Je recommande vivement !\"",      createdAt: new Date(Date.now() - 2*24*3600000).toISOString(),  read: true  },
-];
+const initProNotifs: { id: string; type: ProNotifType; title: string; body: string; createdAt: string; read: boolean }[] = [];
 
 function proFormatRelative(iso: string): string {
   const d = new Date(iso);
@@ -45,6 +39,15 @@ function proFormatRelative(iso: string): string {
   yesterday.setDate(yesterday.getDate() - 1);
   if (d.toDateString() === yesterday.toDateString()) return 'Hier';
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
+function mapProNotifType(t: string): ProNotifType {
+  if (t?.includes('message')) return 'message';
+  if (t?.includes('prestation') || t?.includes('chantier')) return 'job_update';
+  if (t?.includes('devis') || t?.includes('demande')) return 'quote_request';
+  if (t?.includes('paiement') || t?.includes('payment')) return 'payment';
+  if (t?.includes('notation') || t?.includes('avis')) return 'review';
+  return 'message';
 }
 
 function DashboardPro() {
@@ -165,6 +168,7 @@ function DashboardPro() {
     try {
       const me = await authAPI.me();
       const profil = me?.profil ?? me;
+      setProProfileId(profil?.id ?? '');
       setProForm({
         prenom:  profil?.prenom          ?? me?.prenom ?? '',
         nom:     profil?.nom             ?? me?.nom    ?? '',
@@ -174,6 +178,20 @@ function DashboardPro() {
         siret:   profil?.siret           ?? '',
         ville:   profil?.ville           ?? '',
       });
+
+      /* Notifications réelles */
+      try {
+        const notifsRaw = await notificationsAPI.list();
+        const list = Array.isArray(notifsRaw) ? notifsRaw : [];
+        setProNotifications(list.map((n: any) => ({
+          id:        n.id,
+          type:      mapProNotifType(n.type),
+          title:     n.titre ?? 'Notification',
+          body:      n.contenu ?? '',
+          createdAt: n.creeLe ?? new Date().toISOString(),
+          read:      n.statut === 'lue',
+        })));
+      } catch {}
 
       /* Chantiers / prestations */
       try {
@@ -323,22 +341,70 @@ function DashboardPro() {
 
   /* ── Handlers facturation ── */
   const handleNouvelleFacture = () => {
-    const newId = factures.length + 1;
-    const newFacture = {
-      id: newId,
-      num: `F-2026-00${newId + 5}`,
-      client: 'Nouveau client',
-      date: 'Aujourd\'hui',
-      montant: '—',
-      ok: false
-    };
-    setFactures(prev => [newFacture, ...prev]);
-    showNotif('Nouvelle facture créée — complétez les informations');
+    showNotif('Création de facture — fonctionnalité bientôt disponible');
+  };
+
+  /* ── Photo & Signature pro ── */
+  const [proPhotoUrl, setProPhotoUrl] = useState<string>(() => localStorage.getItem('batinnov_pro_avatar') ?? '');
+  const [showProSigModal, setShowProSigModal] = useState(false);
+  const [proSigDataUrl, setProSigDataUrl] = useState<string>(() => localStorage.getItem('batinnov_pro_signature') ?? '');
+  const proPhotoInputRef = useRef<HTMLInputElement>(null);
+  const proSigCanvasRef = useRef<HTMLCanvasElement>(null);
+  const proSigDrawing = useRef(false);
+
+  const handleProPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { showNotif('Photo trop lourde (max 2 Mo)', 'error'); return; }
+    const reader = new FileReader();
+    reader.onload = () => { const url = reader.result as string; setProPhotoUrl(url); localStorage.setItem('batinnov_pro_avatar', url); showNotif('Photo mise à jour ✓'); };
+    reader.readAsDataURL(file);
+  };
+  const proSigStart = (e: React.MouseEvent | React.TouchEvent) => {
+    proSigDrawing.current = true;
+    const canvas = proSigCanvasRef.current; if (!canvas) return;
+    const ctx = canvas.getContext('2d'); if (!ctx) return;
+    const r = canvas.getBoundingClientRect();
+    const x = 'touches' in e ? e.touches[0].clientX - r.left : e.clientX - r.left;
+    const y = 'touches' in e ? e.touches[0].clientY - r.top  : e.clientY - r.top;
+    ctx.beginPath(); ctx.moveTo(x, y);
+  };
+  const proSigMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!proSigDrawing.current) return; e.preventDefault();
+    const canvas = proSigCanvasRef.current; if (!canvas) return;
+    const ctx = canvas.getContext('2d'); if (!ctx) return;
+    const r = canvas.getBoundingClientRect();
+    const x = 'touches' in e ? e.touches[0].clientX - r.left : e.clientX - r.left;
+    const y = 'touches' in e ? e.touches[0].clientY - r.top  : e.clientY - r.top;
+    ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.strokeStyle = '#E87D50';
+    ctx.lineTo(x, y); ctx.stroke();
+  };
+  const proSigEnd = () => { proSigDrawing.current = false; };
+  const proSigClear = () => { const c = proSigCanvasRef.current; if (c) c.getContext('2d')?.clearRect(0, 0, c.width, c.height); };
+  const proSigSave = () => {
+    const url = proSigCanvasRef.current?.toDataURL('image/png') ?? '';
+    setProSigDataUrl(url); localStorage.setItem('batinnov_pro_signature', url);
+    showNotif('Signature enregistrée ✓'); setShowProSigModal(false);
   };
 
   /* ── Handler profil ── */
-  const handleSauvegarderProfil = () => {
-    showNotif('Profil sauvegardé avec succès ✓');
+  const [proProfileId, setProProfileId] = useState('');
+  const [savingProfil, setSavingProfil] = useState(false);
+  const handleSauvegarderProfil = async () => {
+    if (!proProfileId) { showNotif('Profil introuvable', 'error'); return; }
+    setSavingProfil(true);
+    try {
+      const { prestatairesAPI } = await import('../services/api');
+      await prestatairesAPI.update(proProfileId, {
+        telephone:     proForm.tel,
+        raisonSociale: proForm.societe,
+        ville:         proForm.ville,
+      });
+      showNotif('Profil sauvegardé ✓');
+    } catch (err: any) {
+      showNotif(err.message || 'Erreur lors de la sauvegarde', 'error');
+    } finally {
+      setSavingProfil(false);
+    }
   };
 
   /* ── Notifications Pro ── */
@@ -364,6 +430,14 @@ function DashboardPro() {
       : proNotifications.filter(n => n.type === (proNotifFilter as ProNotifType));
 
   const rdvPending = agendaRdv.filter(r => r.statut === 'a_confirmer').length;
+
+  const EmptyState = ({ icon, title, sub }: { icon: React.ReactNode; title: string; sub: string }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '56px 24px', gap: 12, textAlign: 'center' }}>
+      <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF' }}>{icon}</div>
+      <strong style={{ color: '#374151', fontSize: 15 }}>{title}</strong>
+      <span style={{ color: '#9CA3AF', fontSize: 13, maxWidth: 280 }}>{sub}</span>
+    </div>
+  );
 
   const navItems = [
     { id: 'dashboard',   label: 'Tableau de bord' },
@@ -560,6 +634,7 @@ function DashboardPro() {
                 <div className="dp-card-head">
                   <h3>Leads disponibles ({leadsActifs.length})</h3>
                 </div>
+                {leadsActifs.length === 0 && <EmptyState icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>} title="Aucun lead disponible" sub="Les nouvelles demandes validées par l'admin apparaîtront ici." />}
                 {leadsActifs.map(l => (
                   <div key={l.id} className="dp-lead-card">
                     {l.urgent && <span className="dp-urgent"><span className="dp-urgent-dot" />Urgent</span>}
@@ -605,6 +680,7 @@ function DashboardPro() {
                     <span className="dp-page-head-sub">{chantiers.filter(c => c.statut === 'en_cours').length} en cours · {chantiers.filter(c => c.statut === 'planifie').length} planifiés</span>
                   </div>
                   <div className="dp-chantiers-list">
+                    {chantiers.length === 0 && <EmptyState icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>} title="Aucun chantier" sub="Vos prestations assignées apparaîtront ici." />}
                     {chantiers.map(c => {
                       const pct = c.steps.length <= 1 ? 100 : Math.round((c.currentStep / (c.steps.length - 1)) * 100);
                       return (
@@ -861,6 +937,7 @@ function DashboardPro() {
                       onChange={e => setConvSearch(e.target.value)}
                     />
                   </div>
+                  {filteredConvs.length === 0 && <EmptyState icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>} title="Aucun message" sub="Vos échanges avec les clients apparaîtront ici." />}
                   {filteredConvs.map(conv => (
                     <button
                       key={conv.id}
@@ -1010,6 +1087,7 @@ function DashboardPro() {
             <div className="dp-page">
               <div className="dp-card">
                 <div className="dp-card-head"><h3>Mes documents</h3></div>
+                {docs.length === 0 && <EmptyState icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>} title="Aucun document" sub="Vos contrats et attestations apparaîtront ici." />}
                 {docs.map(doc => (
                   <div key={doc.id} className="dp-doc-row">
                     <span className="dp-doc-icon">
@@ -1056,6 +1134,9 @@ function DashboardPro() {
                 <table className="dp-table">
                   <thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Montant</th><th>Statut</th></tr></thead>
                   <tbody>
+                    {factures.length === 0 && (
+                      <tr><td colSpan={5}><EmptyState icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>} title="Aucune facture" sub="Vos paiements reçus apparaîtront ici." /></td></tr>
+                    )}
                     {factures.map(f => (
                       <tr key={f.id}>
                         <td><strong>{f.num}</strong></td>
@@ -1146,55 +1227,122 @@ function DashboardPro() {
           {/* ── PROFIL ── */}
           {activePage === 'profil' && (
             <div className="dp-page">
-              <div className="dp-card" style={{ maxWidth: 640 }}>
-                <div className="dp-profil-head">
-                  <div className="dp-profil-avatar">{pro.avatar}</div>
-                  <div>
-                    <h2>{pro.nom}</h2>
-                    <p>{pro.entreprise} · {pro.ville}</p>
-                    <p style={{ color: '#FFB800', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFB800" stroke="#FFB800" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                      {pro.note}/5 · {pro.avis} avis
-                    </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 640 }}>
+
+                {/* Carte identité */}
+                <div className="dp-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 28 }}>
+                  <div style={{ position: 'relative' }}>
+                    {proPhotoUrl
+                      ? <img src={proPhotoUrl} alt="avatar" style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover' }} />
+                      : <div className="dp-profil-avatar" style={{ width: 80, height: 80, fontSize: 28 }}>{pro.avatar}</div>
+                    }
                   </div>
-                </div>
-                <div className="dp-form-grid">
-                  <div className="dp-form-group">
-                    <label>Prénom</label>
-                    <input value={proForm.prenom} onChange={e => setProForm(f => ({ ...f, prenom: e.target.value }))} />
-                  </div>
-                  <div className="dp-form-group">
-                    <label>Nom</label>
-                    <input value={proForm.nom} onChange={e => setProForm(f => ({ ...f, nom: e.target.value }))} />
-                  </div>
-                  <div className="dp-form-group">
-                    <label>Email</label>
-                    <input value={proForm.email} onChange={e => setProForm(f => ({ ...f, email: e.target.value }))} />
-                  </div>
-                  <div className="dp-form-group">
-                    <label>Téléphone</label>
-                    <input value={proForm.tel} onChange={e => setProForm(f => ({ ...f, tel: e.target.value }))} />
-                  </div>
-                  <div className="dp-form-group" style={{ gridColumn: '1/-1' }}>
-                    <label>Raison sociale</label>
-                    <input value={proForm.societe} onChange={e => setProForm(f => ({ ...f, societe: e.target.value }))} />
-                  </div>
-                  <div className="dp-form-group">
-                    <label>SIRET</label>
-                    <input value={proForm.siret} onChange={e => setProForm(f => ({ ...f, siret: e.target.value }))} />
-                  </div>
-                  <div className="dp-form-group">
-                    <label>Ville</label>
-                    <input value={proForm.ville} onChange={e => setProForm(f => ({ ...f, ville: e.target.value }))} />
-                  </div>
-                </div>
-                <div className="profil-save-row" style={{ marginTop: 8 }}>
-                  <button className="dp-btn-primary" onClick={handleSauvegarderProfil}>
-                    Sauvegarder
+                  <h2 style={{ margin: 0 }}>{pro.nom}</h2>
+                  <p style={{ margin: 0, color: '#6B7280', fontSize: 13 }}>{pro.entreprise} · {pro.ville}</p>
+                  <input ref={proPhotoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleProPhotoChange} />
+                  <button className="dp-btn-ghost" onClick={() => proPhotoInputRef.current?.click()} style={{ fontSize: 13 }}>
+                    {proPhotoUrl ? 'Changer la photo' : 'Ajouter une photo'}
                   </button>
-                  <button onClick={handleLogout} className="btn-deconnexion">Se déconnecter</button>
+                  {proPhotoUrl && (
+                    <button style={{ background: 'none', border: 'none', color: '#9CA3AF', fontSize: 12, cursor: 'pointer' }}
+                      onClick={() => { setProPhotoUrl(''); localStorage.removeItem('batinnov_pro_avatar'); }}>
+                      Supprimer la photo
+                    </button>
+                  )}
                 </div>
+
+                {/* Informations */}
+                <div className="dp-card">
+                  <h3 style={{ marginBottom: 16, fontSize: 15, fontWeight: 700 }}>Informations personnelles</h3>
+                  <div className="dp-form-grid">
+                    <div className="dp-form-group">
+                      <label>Prénom</label>
+                      <input value={proForm.prenom} onChange={e => setProForm(f => ({ ...f, prenom: e.target.value }))} />
+                    </div>
+                    <div className="dp-form-group">
+                      <label>Nom</label>
+                      <input value={proForm.nom} onChange={e => setProForm(f => ({ ...f, nom: e.target.value }))} />
+                    </div>
+                    <div className="dp-form-group">
+                      <label>Email</label>
+                      <input value={proForm.email} readOnly style={{ background: '#F9FAFB', color: '#9CA3AF', cursor: 'not-allowed' }} />
+                    </div>
+                    <div className="dp-form-group">
+                      <label>Téléphone</label>
+                      <input value={proForm.tel} onChange={e => setProForm(f => ({ ...f, tel: e.target.value }))} />
+                    </div>
+                    <div className="dp-form-group" style={{ gridColumn: '1/-1' }}>
+                      <label>Raison sociale</label>
+                      <input value={proForm.societe} onChange={e => setProForm(f => ({ ...f, societe: e.target.value }))} />
+                    </div>
+                    <div className="dp-form-group">
+                      <label>SIRET</label>
+                      <input value={proForm.siret} readOnly style={{ background: '#F9FAFB', color: '#9CA3AF', cursor: 'not-allowed' }} />
+                    </div>
+                    <div className="dp-form-group">
+                      <label>Ville</label>
+                      <input value={proForm.ville} onChange={e => setProForm(f => ({ ...f, ville: e.target.value }))} />
+                    </div>
+                  </div>
+                  <button className="dp-btn-primary" style={{ marginTop: 16 }} onClick={handleSauvegarderProfil} disabled={savingProfil}>
+                    {savingProfil ? 'Sauvegarde…' : 'Enregistrer les modifications'}
+                  </button>
+                </div>
+
+                {/* Signature */}
+                <div className="dp-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Signature électronique</h3>
+                    <button className="dp-btn-ghost" style={{ fontSize: 13 }} onClick={() => setShowProSigModal(true)}>
+                      {proSigDataUrl ? 'Modifier' : 'Créer ma signature'}
+                    </button>
+                  </div>
+                  <div style={{ minHeight: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAFAFA', borderRadius: 8, border: '1.5px solid #F3F4F6' }}>
+                    {proSigDataUrl
+                      ? <img src={proSigDataUrl} alt="signature" style={{ maxHeight: 56, maxWidth: '100%' }} />
+                      : <span style={{ color: '#9CA3AF', fontSize: 13 }}>Aucune signature enregistrée</span>
+                    }
+                  </div>
+                  {proSigDataUrl && (
+                    <button style={{ background: 'none', border: 'none', color: '#9CA3AF', fontSize: 12, cursor: 'pointer', marginTop: 8 }}
+                      onClick={() => { setProSigDataUrl(''); localStorage.removeItem('batinnov_pro_signature'); }}>
+                      Supprimer la signature
+                    </button>
+                  )}
+                </div>
+
+                <button onClick={handleLogout} className="btn-deconnexion" style={{ alignSelf: 'flex-start' }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  Se déconnecter
+                </button>
               </div>
+
+              {/* Modal signature */}
+              {showProSigModal && (
+                <div className="profil-modal-overlay" onClick={() => setShowProSigModal(false)}>
+                  <div className="profil-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 480 }}>
+                    <div className="profil-modal-head">
+                      <h3>Ma signature</h3>
+                      <button className="profil-modal-close" onClick={() => setShowProSigModal(false)}>×</button>
+                    </div>
+                    <p className="profil-modal-sub">Signez dans le cadre ci-dessous à la souris ou au doigt</p>
+                    <canvas
+                      ref={proSigCanvasRef} width={420} height={140}
+                      style={{ width: '100%', height: 140, border: '1.5px solid #E5E7EB', borderRadius: 10, background: '#FAFAFA', cursor: 'crosshair', touchAction: 'none' }}
+                      onMouseDown={proSigStart} onMouseMove={proSigMove} onMouseUp={proSigEnd} onMouseLeave={proSigEnd}
+                      onTouchStart={proSigStart} onTouchMove={proSigMove} onTouchEnd={proSigEnd}
+                    />
+                    <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+                      <button onClick={proSigClear} style={{ flex: 1, padding: '10px 0', border: '1.5px solid #E5E7EB', borderRadius: 8, background: '#fff', color: '#6B7280', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        Effacer
+                      </button>
+                      <button className="dp-btn-primary" style={{ flex: 2 }} onClick={proSigSave}>
+                        Enregistrer la signature
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

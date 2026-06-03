@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { authAPI, clientsAPI, prestatairesAPI, devisAPI, prestationsAPI, demandesAPI, paiementsAPI, rendezVousAPI, prospectsAPI, normalizeDate, normalizeMontant, batchFetchById } from '../services/api';
+import { authAPI, adminsAPI, clientsAPI, prestatairesAPI, devisAPI, prestationsAPI, demandesAPI, paiementsAPI, rendezVousAPI, prospectsAPI, normalizeDate, normalizeMontant, batchFetchById } from '../services/api';
 import './DashboardAdmin.css';
 
 /* ── Icônes SVG ── */
@@ -79,9 +79,7 @@ const QUOTE_FILTERS_ADMIN = [
 ];
 
 const DEFAULT_QUOTE_LINES: QuoteLine[] = [
-  { id: 1, label: 'Étude technique et préparation', quantity: 1, unitPrice: 450,  tvaRate: 20 },
-  { id: 2, label: 'Intervention principale',         quantity: 1, unitPrice: 1850, tvaRate: 20 },
-  { id: 3, label: 'Contrôle qualité et remise',      quantity: 1, unitPrice: 280,  tvaRate: 20 },
+  { id: 1, label: '', quantity: 1, unitPrice: 0, tvaRate: 20 },
 ];
 
 const initQuotes: AdminQuote[] = [];
@@ -89,21 +87,6 @@ const initQuotes: AdminQuote[] = [];
 /* ── Données statiques ── */
 const initUtilisateurs: any[] = [];
 
-const activiteRecente = [
-  { id: 1, texte: 'Nouveau client inscrit : Paul Martin', temps: 'il y a 8 min', color: '#10B981' },
-  { id: 2, texte: 'Dossier reçu : Vidal Rénov (Issoire)', temps: 'il y a 42 min', color: '#E87D50' },
-  { id: 3, texte: 'Paiement reçu : F2026-0341 · 1 428 €', temps: 'il y a 2h', color: '#2563EB' },
-  { id: 4, texte: 'RDV demandé : Marc Leroy / Jean Dupont', temps: 'il y a 3h', color: '#6366F1' },
-  { id: 5, texte: 'Service démarré : Installation IRVE #P1', temps: 'il y a 5h', color: '#4A7A5C' },
-];
-
-const monthlyCA = [
-  { mois: 'Jan', montant: 12400 },
-  { mois: 'Fév', montant: 15200 },
-  { mois: 'Mar', montant: 18600 },
-  { mois: 'Avr', montant: 22100 },
-  { mois: 'Mai', montant: 14300 },
-];
 
 const initialDossiers: any[] = [];
 
@@ -326,6 +309,16 @@ function mapProspectStatus(s: string): string {
   return 'new';
 }
 
+const AdminEmpty = ({ title, sub }: { title: string; sub: string }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px', gap: 10, textAlign: 'center' }}>
+    <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <strong style={{ color: '#374151', fontSize: 14 }}>{title}</strong>
+    <span style={{ color: '#9CA3AF', fontSize: 13 }}>{sub}</span>
+  </div>
+);
+
 export default function DashboardAdmin() {
   const [page, setPage] = useState('accueil');
   const [userFilter, setUserFilter] = useState('tous');
@@ -337,9 +330,68 @@ export default function DashboardAdmin() {
   const [dossiers, setDossiers] = useState<any[]>(initialDossiers);
   const [rdvList, setRdvList] = useState<any[]>(initialRdvs);
   const [services, setServices] = useState<any[]>([]);
-  const [adminFactures, setAdminFactures] = useState<any[]>(factures);
+  const [adminFactures, setAdminFactures] = useState<any[]>([]);
+  const [activiteReelle, setActiviteReelle] = useState<{ id: string; texte: string; temps: string; color: string }[]>([]);
+  const [monthlyCA, setMonthlyCA] = useState<{ mois: string; montant: number }[]>([]);
   const [utilisateurs, setUtilisateurs] = useState(initUtilisateurs);
   const [notif, setNotif] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+  /* ── Profil admin ── */
+  const [adminForm, setAdminForm] = useState({ prenom: '', nom: '', email: '', fonction: '' });
+  const [adminProfileId, setAdminProfileId] = useState('');
+  const [adminSaving, setAdminSaving] = useState(false);
+  const [adminPhotoUrl, setAdminPhotoUrl] = useState<string>(() => localStorage.getItem('batinnov_admin_avatar') ?? '');
+  const [adminSigDataUrl, setAdminSigDataUrl] = useState<string>(() => localStorage.getItem('batinnov_admin_signature') ?? '');
+  const [showAdminSigModal, setShowAdminSigModal] = useState(false);
+  const adminPhotoInputRef = useRef<HTMLInputElement>(null);
+  const adminSigCanvasRef = useRef<HTMLCanvasElement>(null);
+  const adminSigDrawing = useRef(false);
+
+  const handleAdminPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { showNotif('Photo trop lourde (max 2 Mo)', 'error'); return; }
+    const reader = new FileReader();
+    reader.onload = () => { const url = reader.result as string; setAdminPhotoUrl(url); localStorage.setItem('batinnov_admin_avatar', url); showNotif('Photo mise à jour', 'success'); };
+    reader.readAsDataURL(file);
+  };
+  const adminSigStart = (e: React.MouseEvent | React.TouchEvent) => {
+    adminSigDrawing.current = true;
+    const canvas = adminSigCanvasRef.current; if (!canvas) return;
+    const ctx = canvas.getContext('2d'); if (!ctx) return;
+    const r = canvas.getBoundingClientRect();
+    const x = 'touches' in e ? e.touches[0].clientX - r.left : e.clientX - r.left;
+    const y = 'touches' in e ? e.touches[0].clientY - r.top  : e.clientY - r.top;
+    ctx.beginPath(); ctx.moveTo(x, y);
+  };
+  const adminSigMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!adminSigDrawing.current) return; e.preventDefault();
+    const canvas = adminSigCanvasRef.current; if (!canvas) return;
+    const ctx = canvas.getContext('2d'); if (!ctx) return;
+    const r = canvas.getBoundingClientRect();
+    const x = 'touches' in e ? e.touches[0].clientX - r.left : e.clientX - r.left;
+    const y = 'touches' in e ? e.touches[0].clientY - r.top  : e.clientY - r.top;
+    ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.strokeStyle = '#111827';
+    ctx.lineTo(x, y); ctx.stroke();
+  };
+  const adminSigEnd = () => { adminSigDrawing.current = false; };
+  const adminSigClear = () => { const c = adminSigCanvasRef.current; if (c) c.getContext('2d')?.clearRect(0, 0, c.width, c.height); };
+  const adminSigSave = () => {
+    const url = adminSigCanvasRef.current?.toDataURL('image/png') ?? '';
+    setAdminSigDataUrl(url); localStorage.setItem('batinnov_admin_signature', url);
+    showNotif('Signature enregistrée', 'success'); setShowAdminSigModal(false);
+  };
+  const handleAdminSaveProfil = async () => {
+    if (!adminProfileId) { showNotif('Profil introuvable', 'error'); return; }
+    setAdminSaving(true);
+    try {
+      await adminsAPI.update(adminProfileId, { prenom: adminForm.prenom, nom: adminForm.nom, fonction: adminForm.fonction });
+      showNotif('Profil sauvegardé ✓', 'success');
+    } catch (err: any) {
+      showNotif(err.message || 'Erreur sauvegarde', 'error');
+    } finally {
+      setAdminSaving(false);
+    }
+  };
   const [leadStatusFilter, setLeadStatusFilter] = useState('all');
   const [leadPriorityFilter, setLeadPriorityFilter] = useState('all');
   const [leadSearch, setLeadSearch] = useState('');
@@ -355,9 +407,11 @@ export default function DashboardAdmin() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [qTitle, setQTitle] = useState('');
   const [qLines, setQLines] = useState<QuoteLine[]>(DEFAULT_QUOTE_LINES.map(l => ({ ...l })));
-  const [qDelay, setQDelay] = useState('Intervention sous 3 à 4 semaines après validation.');
-  const [qConditions, setQConditions] = useState('Acompte 30 % à la commande. Solde à réception.');
-  const [qNotes, setQNotes] = useState("Proposition préparée par l'Admin.");
+  const [qDelay, setQDelay] = useState('');
+  const [qConditions, setQConditions] = useState('');
+  const [qNotes, setQNotes] = useState('');
+  const [qDemandeId, setQDemandeId] = useState('');
+  const [qCreating, setQCreating] = useState(false);
   const [qValidUntil, setQValidUntil] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [validationFilter, setValidationFilter] = useState('tous');
@@ -460,6 +514,27 @@ export default function DashboardAdmin() {
     return matchService && matchSearch;
   });
 
+  const STAGE_TO_STATUT: Record<DemandeStage, string> = {
+    received: 'recue', admin_validation: 'en_qualification',
+    quotes_sent: 'validee', client_decision: 'signee', payment: 'payee',
+  };
+
+  const advanceDemande = async (dem: DemandeAdmin, nextStage: DemandeStage) => {
+    try {
+      if (nextStage === 'admin_validation') {
+        await demandesAPI.qualifier(String(dem.id), '');
+      } else if (nextStage === 'quotes_sent') {
+        await demandesAPI.valider(String(dem.id));
+      } else {
+        await demandesAPI.patch(String(dem.id), { statut: STAGE_TO_STATUT[nextStage] });
+      }
+      setDemandes(prev => prev.map(d => d.id === dem.id ? { ...d, stage: nextStage } : d));
+      showNotif(`Statut mis à jour → ${DEMANDE_STAGES.find(s => s.key === nextStage)?.label} ✓`);
+    } catch (err: any) {
+      showNotif(err.message || 'Erreur mise à jour', 'error');
+    }
+  };
+
   const selectedDemande = selectedDemandeId ? demandes.find(d => d.id === selectedDemandeId) ?? null : null;
 
   const selectedQuote = selectedQuoteId ? quotes.find(q => q.id === selectedQuoteId) ?? null : null;
@@ -480,6 +555,7 @@ export default function DashboardAdmin() {
     { id: 'finance',      icon: <Icon.Euro />,      label: 'Finance' },
     { id: 'rdv',          icon: <Icon.Calendar />,  label: 'RDV', badge: rdvsACoord.length },
     { id: 'suivi',        icon: <Icon.Check />,     label: 'Suivi requêtes', badge: demandes.filter(d => d.stage === 'received').length },
+    { id: 'profil',       icon: <Icon.Users />,     label: 'Mon profil', badge: 0 },
   ];
 
   const filteredUsers = utilisateurs.filter(u => {
@@ -535,6 +611,19 @@ export default function DashboardAdmin() {
   /* ── Fetch données réelles ── */
   const fetchAdminData = useCallback(async () => {
     try {
+      /* Profil admin */
+      try {
+        const me = await authAPI.me();
+        const profil = me?.profil ?? me;
+        setAdminProfileId(profil?.id ?? '');
+        setAdminForm({
+          prenom:   profil?.prenom   ?? me?.prenom   ?? '',
+          nom:      profil?.nom      ?? me?.nom      ?? '',
+          email:    me?.email        ?? '',
+          fonction: profil?.fonction ?? '',
+        });
+      } catch {}
+
       /* Utilisateurs : clients + prestataires — API retourne { data: [], total, ... } */
       const [clientsRaw, presRaw] = await Promise.allSettled([clientsAPI.getAll(), prestatairesAPI.getAll()]);
       // clientsAPI/prestatairesAPI.getAll() retourne data.data (tableau)
@@ -710,6 +799,44 @@ export default function DashboardAdmin() {
         })));
       } catch {}
 
+      /* Activité récente — construite depuis les données réelles */
+      try {
+        const events: { id: string; texte: string; date: string; color: string }[] = [];
+        // Derniers clients
+        (clientsList as any[]).slice(-3).forEach((c: any) => events.push({ id: `c-${c.id}`, texte: `Nouveau client : ${c.prenom ?? ''} ${c.nom ?? ''}`.trim(), date: c.creeLe ?? '', color: '#10B981' }));
+        // Dernières demandes
+        (await demandesAPI.list({ limit: '3' } as any)).slice?.(-3)?.forEach?.((d: any) => events.push({ id: `d-${d.id}`, texte: `Demande reçue : ${d.typePrestationLibelle ?? d.description?.slice(0,40) ?? '—'}`, date: d.creeLe ?? '', color: '#4A7A5C' }));
+        // Derniers paiements
+        (await paiementsAPI.getAll()).slice?.(-3)?.forEach?.((p: any) => events.push({ id: `p-${p.id}`, texte: `Paiement reçu : ${normalizeMontant(Number(p.montant ?? 0))}`, date: p.creeLe ?? '', color: '#2563EB' }));
+
+        const sorted = events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+        const now = Date.now();
+        setActiviteReelle(sorted.map(e => {
+          const diff = Math.floor((now - new Date(e.date).getTime()) / 60000);
+          const temps = diff < 1 ? "À l'instant" : diff < 60 ? `il y a ${diff} min` : diff < 1440 ? `il y a ${Math.floor(diff/60)}h` : `il y a ${Math.floor(diff/1440)}j`;
+          return { id: e.id, texte: e.texte, temps, color: e.color };
+        }));
+      } catch { setActiviteReelle([]); }
+
+      /* CA mensuel — depuis les paiements réels */
+      try {
+        const paiementsRaw = await paiementsAPI.getAll();
+        const list = Array.isArray(paiementsRaw) ? paiementsRaw : [];
+        const MOIS = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+        const byMonth: Record<number, number> = {};
+        list.filter((p: any) => p.statut === 'paye').forEach((p: any) => {
+          const d = new Date(p.datePaiement ?? p.creeLe);
+          const m = d.getMonth();
+          byMonth[m] = (byMonth[m] ?? 0) + Number(p.montant ?? 0);
+        });
+        const now2 = new Date();
+        const months = Array.from({ length: 6 }, (_, i) => {
+          const m = (now2.getMonth() - 5 + i + 12) % 12;
+          return { mois: MOIS[m], montant: byMonth[m] ?? 0 };
+        });
+        setMonthlyCA(months);
+      } catch { setMonthlyCA([]); }
+
     } catch (err: any) {
       console.error('[DashboardAdmin] fetchData:', err.message);
     }
@@ -776,8 +903,18 @@ export default function DashboardAdmin() {
               <p className="admin-hero-label">Pilotage global</p>
               <h2>Contrôlez l'activité Batinnov en temps réel.</h2>
               <div className="admin-hero-stats">
-                <div><strong>186 420 €</strong><span>CA total</span></div>
-                <div><strong>+12 %</strong><span>Ce mois</span></div>
+                <div>
+                  <strong>
+                    {adminFactures.filter(f => f.statut === 'paye')
+                      .reduce((s, f) => s + parseFloat(String(f.montant).replace(/\s/g,'').replace('€','') || '0'), 0)
+                      .toLocaleString('fr-FR')} €
+                  </strong>
+                  <span>CA encaissé</span>
+                </div>
+                <div>
+                  <strong>{adminFactures.filter(f => f.statut === 'attente').length}</strong>
+                  <span>En attente</span>
+                </div>
               </div>
             </div>
 
@@ -809,7 +946,7 @@ export default function DashboardAdmin() {
 
             <div className="admin-kpi-grid">
               <div className="admin-kpi" style={{ cursor: 'pointer' }} onClick={() => navigateTo('services')}>
-                <span className="admin-kpi-num">37</span><span>Services en cours</span>
+                <span className="admin-kpi-num">{services.filter(s => s.statut === 'en_cours').length}</span><span>Services en cours</span>
               </div>
               <div className="admin-kpi" style={{ cursor: 'pointer' }} onClick={() => navigateTo('validation')}>
                 <span className="admin-kpi-num">{dossiersEnAttente.length}</span><span>Dossiers en attente</span>
@@ -847,7 +984,8 @@ export default function DashboardAdmin() {
                 <h3>Activité récente</h3>
               </div>
               <div className="admin-activity-feed">
-                {activiteRecente.map(a => (
+                {activiteReelle.length === 0 && <p style={{ fontSize: 13, color: '#9CA3AF', padding: '12px 0' }}>Aucune activité récente</p>}
+                {activiteReelle.map(a => (
                   <div key={a.id} className="admin-activity-row">
                     <span className="admin-activity-dot" style={{ background: a.color }} />
                     <span className="admin-activity-text">{a.texte}</span>
@@ -910,6 +1048,7 @@ export default function DashboardAdmin() {
             </div>
 
             <div className="admin-user-list">
+              {filteredUsers.length === 0 && <AdminEmpty title="Aucun utilisateur" sub="Les clients et prestataires inscrits apparaîtront ici." />}
               {filteredUsers.map(u => (
                 <div key={u.id} className="admin-user-row" style={{ cursor: 'pointer' }} onClick={() => setSelectedUserId(u.id)}>
                   <div className="admin-user-avatar">{u.nom[0]}</div>
@@ -1198,6 +1337,7 @@ export default function DashboardAdmin() {
             </div>
 
             <div className="admin-services-list">
+              {filteredServices.length === 0 && <AdminEmpty title="Aucun service" sub="Les prestations assignées apparaîtront ici." />}
               {filteredServices.map(s => {
                 const cfg = statutServiceConfig[s.statut] ?? statutServiceConfig['en_cours'];
                 const svc = SERVICE_TYPE_VISUAL[s.serviceType] ?? SERVICE_TYPE_VISUAL['travaux'];
@@ -1410,7 +1550,8 @@ export default function DashboardAdmin() {
             <div className="admin-section" style={{ marginBottom: 0 }}>
               <h3 style={{ marginBottom: 16 }}>Chiffre d'affaires mensuel</h3>
               <div className="admin-chart">
-                {(() => { const max = Math.max(...monthlyCA.map(m => m.montant)); return monthlyCA.map(m => (
+                {monthlyCA.length === 0 && <AdminEmpty title="Aucune donnée CA" sub="Les paiements encaissés alimenteront ce graphique." />}
+                {(() => { const max = Math.max(...monthlyCA.map(m => m.montant), 1); return monthlyCA.map(m => (
                   <div key={m.mois} className="admin-chart-col">
                     <span className="admin-chart-val">{(m.montant / 1000).toFixed(0)}k€</span>
                     <div className="admin-chart-bar-wrap">
@@ -1543,6 +1684,7 @@ export default function DashboardAdmin() {
               </div>
             )}
             <div className="admin-rdv-list">
+              {rdvList.length === 0 && <AdminEmpty title="Aucun rendez-vous" sub="Les RDV à coordonner apparaîtront ici." />}
               {rdvList.map(r => (
                 <div key={r.id} className={`admin-rdv-card ${r.statut}`}>
                   <div className="admin-rdv-info">
@@ -1618,6 +1760,7 @@ export default function DashboardAdmin() {
             </div>
 
             <div className="admin-leads-list">
+              {filteredLeads.length === 0 && <AdminEmpty title="Aucun lead" sub="Les prospects apparaîtront ici." />}
               {filteredLeads.map(lead => {
                 const sc = LEAD_STATUS[lead.status];
                 const pc = LEAD_PRIORITY[lead.priority];
@@ -1750,6 +1893,7 @@ export default function DashboardAdmin() {
             </div>
 
             <div className="admin-quotes-list">
+              {filteredQuotes.length === 0 && <AdminEmpty title="Aucun devis" sub="Les devis créés ou reçus apparaîtront ici." />}
               {filteredQuotes.map(q => {
                 const sc = QUOTE_STATUS_ADMIN[q.status];
                 const svc = SERVICE_ADMIN_VISUAL[q.serviceType] ?? { label: q.serviceType, color: '#6B7280', bg: '#F3F4F6' };
@@ -1787,6 +1931,15 @@ export default function DashboardAdmin() {
 
             {showCreateForm && (
               <div className="admin-create-quote-form">
+                <div className="admin-cq-field">
+                  <label>Demande associée *</label>
+                  <select value={qDemandeId} onChange={e => setQDemandeId(e.target.value)} style={{ width: '100%', padding: '8px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 13 }}>
+                    <option value="">— Sélectionner une demande —</option>
+                    {demandes.map(d => (
+                      <option key={d.id} value={d.id}>{d.ref} · {d.client} · {d.title}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="admin-cq-field">
                   <label>Titre du devis</label>
                   <input value={qTitle} onChange={e => setQTitle(e.target.value)} placeholder="Ex : Devis installation borne IRVE 7,4 kW" />
@@ -1848,21 +2001,30 @@ export default function DashboardAdmin() {
 
                 <div className="admin-cq-actions">
                   <button className="admin-doc-btn open" onClick={() => showNotif('Brouillon enregistré')}>Enregistrer brouillon</button>
-                  <button className="admin-btn-validate-all" style={{ flex: 1 }} onClick={() => {
+                  <button className="admin-btn-validate-all" style={{ flex: 1 }} disabled={qCreating} onClick={async () => {
+                    if (!qDemandeId) { showNotif('Sélectionnez une demande', 'error'); return; }
                     if (!qTitle.trim()) { showNotif('Saisissez un titre', 'error'); return; }
-                    const newId = Math.max(...quotes.map(q => q.id)) + 1;
-                    const newQuote: AdminQuote = {
-                      id: newId, ref: `DEV-00${newId}`, title: qTitle,
-                      client: '—', provider: 'Admin', serviceType: 'travaux',
-                      createdAt: 'Aujourd\'hui', validUntil: qValidUntil || '—',
-                      status: 'sent', items: qLines.map(l => ({ ...l })),
-                      notes: qNotes,
-                    };
-                    setQuotes(prev => [newQuote, ...prev]);
-                    setQTitle(''); setQLines(DEFAULT_QUOTE_LINES.map(l => ({ ...l }))); setShowCreateForm(false);
-                    showNotif('Devis créé et transmis au client ✓');
+                    const demande = demandes.find(d => String(d.id) === String(qDemandeId));
+                    if (!demande) { showNotif('Demande introuvable', 'error'); return; }
+                    setQCreating(true);
+                    try {
+                      const created = await devisAPI.create({
+                        demandeId: qDemandeId,
+                        clientId: demande.clientId ?? demande.id,
+                        objet: qTitle,
+                        notes: [qNotes, qDelay, qConditions].filter(Boolean).join('\n'),
+                        dateValidite: qValidUntil || undefined,
+                      });
+                      await fetchAdminData();
+                      setQTitle(''); setQLines(DEFAULT_QUOTE_LINES.map(l => ({ ...l }))); setQDemandeId(''); setQNotes(''); setQDelay(''); setQConditions(''); setShowCreateForm(false);
+                      showNotif('Devis créé ✓');
+                    } catch (err: any) {
+                      showNotif(err.message || 'Erreur création devis', 'error');
+                    } finally {
+                      setQCreating(false);
+                    }
                   }}>
-                    Soumettre le devis
+                    {qCreating ? 'Création…' : 'Soumettre le devis'}
                   </button>
                 </div>
               </div>
@@ -1998,10 +2160,7 @@ export default function DashboardAdmin() {
                             <span className="admin-suivi-card-amount">{dem.amount.toLocaleString('fr-FR')} €</span>
                           )}
                           {nextStage && (
-                            <button className="admin-suivi-advance-btn" onClick={() => {
-                              setDemandes(prev => prev.map(d => d.id === dem.id ? { ...d, stage: nextStage.key } : d));
-                              showNotif(`→ ${nextStage.label}`);
-                            }}>
+                            <button className="admin-suivi-advance-btn" onClick={() => advanceDemande(dem, nextStage.key)}>
                               Avancer → {nextStage.label}
                             </button>
                           )}
@@ -2057,6 +2216,7 @@ export default function DashboardAdmin() {
             </div>
 
             <div className="admin-demandes-list">
+              {filteredDemandes.length === 0 && <AdminEmpty title="Aucune demande" sub="Les demandes clients apparaîtront ici." />}
               {filteredDemandes.map(dem => {
                 const svc = SERVICE_ADMIN_VISUAL[dem.serviceType];
                 const stageIdx = DEMANDE_STAGES.findIndex(s => s.key === dem.stage);
@@ -2149,16 +2309,119 @@ export default function DashboardAdmin() {
                     key={s.key}
                     className={`admin-filter-btn ${selectedDemande.stage === s.key ? 'active' : ''}`}
                     style={selectedDemande.stage === s.key ? { background: `${DEMANDE_STAGE_COLOR[s.key]}18`, color: DEMANDE_STAGE_COLOR[s.key], borderColor: DEMANDE_STAGE_COLOR[s.key] } : {}}
-                    onClick={() => {
-                      setDemandes(prev => prev.map(d => d.id === selectedDemande.id ? { ...d, stage: s.key } : d));
-                      showNotif(`Étape mise à jour : ${s.label}`);
-                    }}
+                    onClick={() => advanceDemande(selectedDemande, s.key)}
                   >
                     {s.label}
                   </button>
                 ))}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ══ PROFIL ADMIN ══ */}
+        {page === 'profil' && (
+          <div className="admin-page" style={{ maxWidth: 600 }}>
+            <div className="admin-page-header"><h1>Mon profil</h1></div>
+
+            {/* Carte identité */}
+            <div className="admin-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 28 }}>
+              {adminPhotoUrl
+                ? <img src={adminPhotoUrl} alt="avatar" style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover' }} />
+                : <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#111827', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 700 }}>
+                    {adminForm.prenom?.[0]?.toUpperCase()}{adminForm.nom?.[0]?.toUpperCase()}
+                  </div>
+              }
+              <strong style={{ fontSize: 16 }}>{adminForm.prenom} {adminForm.nom}</strong>
+              <span style={{ color: '#6B7280', fontSize: 13 }}>{adminForm.fonction || 'Administrateur'} · Batinnov</span>
+              <input ref={adminPhotoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAdminPhotoChange} />
+              <button className="admin-doc-btn open" onClick={() => adminPhotoInputRef.current?.click()} style={{ fontSize: 13 }}>
+                {adminPhotoUrl ? 'Changer la photo' : 'Ajouter une photo'}
+              </button>
+              {adminPhotoUrl && (
+                <button style={{ background: 'none', border: 'none', color: '#9CA3AF', fontSize: 12, cursor: 'pointer' }}
+                  onClick={() => { setAdminPhotoUrl(''); localStorage.removeItem('batinnov_admin_avatar'); }}>
+                  Supprimer la photo
+                </button>
+              )}
+            </div>
+
+            {/* Informations */}
+            <div className="admin-section">
+              <h3 style={{ marginBottom: 16, fontSize: 15, fontWeight: 700 }}>Informations</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                {[
+                  { label: 'Prénom', key: 'prenom' as const },
+                  { label: 'Nom', key: 'nom' as const },
+                  { label: 'Fonction', key: 'fonction' as const },
+                ].map(f => (
+                  <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{f.label}</label>
+                    <input
+                      value={adminForm[f.key]}
+                      onChange={e => setAdminForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                      style={{ padding: '9px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 14, fontFamily: 'inherit' }}
+                    />
+                  </div>
+                ))}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email</label>
+                  <input value={adminForm.email} readOnly style={{ padding: '9px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 14, fontFamily: 'inherit', background: '#F9FAFB', color: '#9CA3AF', cursor: 'not-allowed' }} />
+                </div>
+              </div>
+              <button className="admin-btn-validate-all" style={{ marginTop: 16 }} onClick={handleAdminSaveProfil} disabled={adminSaving}>
+                {adminSaving ? 'Sauvegarde…' : 'Enregistrer les modifications'}
+              </button>
+            </div>
+
+            {/* Signature */}
+            <div className="admin-section">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Signature électronique</h3>
+                <button className="admin-doc-btn open" style={{ fontSize: 13 }} onClick={() => setShowAdminSigModal(true)}>
+                  {adminSigDataUrl ? 'Modifier' : 'Créer ma signature'}
+                </button>
+              </div>
+              <div style={{ minHeight: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAFAFA', borderRadius: 8, border: '1.5px solid #F3F4F6' }}>
+                {adminSigDataUrl
+                  ? <img src={adminSigDataUrl} alt="signature" style={{ maxHeight: 56, maxWidth: '100%' }} />
+                  : <span style={{ color: '#9CA3AF', fontSize: 13 }}>Aucune signature enregistrée</span>
+                }
+              </div>
+              {adminSigDataUrl && (
+                <button style={{ background: 'none', border: 'none', color: '#9CA3AF', fontSize: 12, cursor: 'pointer', marginTop: 8 }}
+                  onClick={() => { setAdminSigDataUrl(''); localStorage.removeItem('batinnov_admin_signature'); }}>
+                  Supprimer la signature
+                </button>
+              )}
+            </div>
+
+            {/* Modal signature */}
+            {showAdminSigModal && (
+              <div className="profil-modal-overlay" onClick={() => setShowAdminSigModal(false)}>
+                <div className="profil-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 480 }}>
+                  <div className="profil-modal-head">
+                    <h3>Ma signature</h3>
+                    <button className="profil-modal-close" onClick={() => setShowAdminSigModal(false)}>×</button>
+                  </div>
+                  <p className="profil-modal-sub">Signez dans le cadre ci-dessous à la souris ou au doigt</p>
+                  <canvas
+                    ref={adminSigCanvasRef} width={420} height={140}
+                    style={{ width: '100%', height: 140, border: '1.5px solid #E5E7EB', borderRadius: 10, background: '#FAFAFA', cursor: 'crosshair', touchAction: 'none' }}
+                    onMouseDown={adminSigStart} onMouseMove={adminSigMove} onMouseUp={adminSigEnd} onMouseLeave={adminSigEnd}
+                    onTouchStart={adminSigStart} onTouchMove={adminSigMove} onTouchEnd={adminSigEnd}
+                  />
+                  <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+                    <button onClick={adminSigClear} style={{ flex: 1, padding: '10px 0', border: '1.5px solid #E5E7EB', borderRadius: 8, background: '#fff', color: '#6B7280', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      Effacer
+                    </button>
+                    <button className="admin-btn-validate-all" style={{ flex: 2 }} onClick={adminSigSave}>
+                      Enregistrer la signature
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

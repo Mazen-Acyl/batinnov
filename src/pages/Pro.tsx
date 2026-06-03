@@ -7,6 +7,7 @@ function Pro() {
   const [step, setStep] = useState(1);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [formData, setFormData] = useState({
+    prenom: '', nom: '',
     raisonSociale: '', siret: '', email: '', telephone: '',
     adresse: '', codePostal: '', ville: '',
     motDePasse: '', confirmMotDePasse: ''
@@ -93,6 +94,8 @@ function Pro() {
     setLoading(true);
     try {
       await registerPro({
+        prenom: formData.prenom,
+        nom: formData.nom,
         raisonSociale: formData.raisonSociale,
         siret: formData.siret,
         email: formData.email,
@@ -203,6 +206,23 @@ function Pro() {
                 <h3>Étape 2/2 : Vos informations</h3>
                 <form className="form-pro" onSubmit={handleSubmit}>
                   {error && <div className="form-error-banner">{error}</div>}
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Prénom *</label>
+                      <input
+                        type="text" name="prenom" placeholder="Jean"
+                        value={formData.prenom} onChange={handleChange} required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Nom *</label>
+                      <input
+                        type="text" name="nom" placeholder="Dupont"
+                        value={formData.nom} onChange={handleChange} required
+                      />
+                    </div>
+                  </div>
 
                   <div className="form-row">
                     <div className="form-group">

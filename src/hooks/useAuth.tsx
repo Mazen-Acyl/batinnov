@@ -22,13 +22,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const init = async () => {
-      if (authAPI.isAuthenticated()) {
-        try {
-          const me = await authAPI.me();
-          setUser(me);
-        } catch {
-          authAPI.logout();
-        }
+      try {
+        const me = await authAPI.me();
+        setUser(me);
+      } catch {
+        setUser(null);
       }
       setLoading(false);
     };
@@ -83,8 +81,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = (): void => {
-    authAPI.logout();
+  const logout = async (): Promise<void> => {
+    await authAPI.logout();
     setUser(null);
   };
 

@@ -38,32 +38,6 @@ function Home() {
     }
   ];
 
-  const avis = [
-    {
-      texte: "Travail impeccable pour la rénovation de notre cuisine. L'artisan a été ponctuel, professionnel et très soigneux. Je recommande vivement !",
-      auteur: "Marie L.",
-      service: "Rénovation cuisine",
-      note: 5
-    },
-    {
-      texte: "Installation de notre borne de recharge en moins de 2h. Tarif respecté, équipe sympa. Parfait pour notre nouvelle voiture électrique.",
-      auteur: "Thomas D.",
-      service: "Borne IRVE",
-      note: 5
-    },
-    {
-      texte: "Nous avons fait adapter la salle de bain de ma mère. Les artisans ont été très à l'écoute et le résultat est parfait pour son confort.",
-      auteur: "Sophie M.",
-      service: "Aide à la personne",
-      note: 4
-    },
-    {
-      texte: "Création d'un dressing sur-mesure. Le rendu est magnifique et conforme à nos attentes. Bravo à toute l'équipe BATINNOV !",
-      auteur: "Pierre R.",
-      service: "Aménagement",
-      note: 5
-    }
-  ];
 
   return (
     <div className="home-page">
@@ -118,28 +92,31 @@ function Home() {
         </div>
       </section>
 
-      {/* SERVICES POPULAIRES STYLE WECASA */}
+      {/* SERVICES */}
       <section id="services-section" className="services-section">
         <div className="container">
-          <h2>Nos services à domicile</h2>
+          <div className="services-header">
+            <span className="services-tag">Nos prestations</span>
+            <h2>Des experts pour chaque projet</h2>
+            <p className="services-sub">Artisans certifiés, devis gratuit sous 48h</p>
+          </div>
           <div className="services-grid">
             {services.map((service) => (
               <div key={service.id} className="service-card">
-                <Link to={service.link} className="service-card-inner">
-                  <div className="service-image-wrap">
-                    <img src={service.image} alt={service.title} />
-                  </div>
-                  <div className="service-card-body">
-                    <h3 style={{ color: service.color }}>{service.title}</h3>
+                <Link to={service.link} className="service-card-img-wrap">
+                  <img src={service.image} alt={service.title} />
+                  <div className="service-card-overlay" />
+                  <div className="service-card-img-content">
+                    <h3>{service.title}</h3>
                     <p>{service.desc}</p>
                   </div>
                 </Link>
                 <button
-                  className="service-card-devis-btn"
-                  style={{ borderColor: service.color, color: service.color }}
+                  className="service-card-cta"
                   onClick={() => navigate(`/devis?service=${service.id}`)}
                 >
-                  Demander un devis →
+                  Demander un devis
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </button>
               </div>
             ))}
@@ -195,31 +172,6 @@ function Home() {
         </div>
       </section>
 
-      {/* AVIS CLIENTS */}
-      <section className="avis-section">
-        <div className="container">
-          <div className="avis-header">
-            <h2>Déjà 2 000 moments de bonheur</h2>
-            <p>Nos clients nous notent <strong>4,8/5</strong></p>
-          </div>
-          <div className="avis-grid">
-            {avis.map((item, index) => (
-              <div key={index} className="avis-card">
-                <div className="avis-stars">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <span key={i} style={{ color: i < item.note ? '#FFB800' : '#DDDDDD', fontSize: '20px' }}>★</span>
-                  ))}
-                </div>
-                <p className="avis-texte">{item.texte}</p>
-                <div className="avis-auteur">
-                  <strong>{item.auteur}</strong>
-                  <span>{item.service}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* WE ARE BATINNOV - Style Wecasa */}
       <section className="we-are-section">
