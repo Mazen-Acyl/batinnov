@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../hooks/useAuth';
+import { demandesAPI, authAPI } from '../services/api';
 import './DemandeDevis.css';
 
 const SERVICES = [
@@ -31,9 +32,49 @@ function DemandeDevis() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const submitted = useRef(false);
 
   const { isAuthenticated, login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+
+  const DOMAINE_MAP: Record<string, string> = {
+    'renovation':    'renovation',
+    'irve':          'irve',
+    'aide-personne': 'service_personne',
+    'courtage':      'courtage',
+  };
+
+  const submitDemande = async () => {
+    if (submitted.current) return;
+    submitted.current = true;
+    setSubmitting(true);
+    try {
+      const me = await authAPI.me();
+      const clientId = me?.profil?.id;
+      if (!clientId) throw new Error('Profil client introuvable. Reconnectez-vous.');
+
+      let description = devis.description;
+      if (devis.surface) description += `\nSurface : ${devis.surface}`;
+      if (devis.budget)  description += `\nBudget estimé : ${devis.budget}`;
+
+      await demandesAPI.create({
+        clientId,
+        description,
+        adresseIntervention:    devis.ville,
+        codePostalIntervention: devis.codePostal,
+        villeIntervention:      devis.ville,
+        domaine:                DOMAINE_MAP[devis.service] ?? devis.service,
+      });
+      setSuccess(true);
+    } catch (err: any) {
+      submitted.current = false;
+      setAuthError(err.message || 'Erreur lors de l\'envoi de votre demande. Réessayez.');
+    } finally {
+      setSubmitting(false);
+      setAuthLoading(false);
+    }
+  };
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -41,10 +82,9 @@ function DemandeDevis() {
       setAuthLoading(true);
       try {
         await loginWithGoogle(tokenResponse.access_token);
-        setSuccess(true);
+        await submitDemande();
       } catch {
         setAuthError('Connexion Google échouée. Réessayez.');
-      } finally {
         setAuthLoading(false);
       }
     },
@@ -56,7 +96,7 @@ function DemandeDevis() {
   }, [step]);
 
   useEffect(() => {
-    if (step === 3 && isAuthenticated) setSuccess(true);
+    if (step === 3 && isAuthenticated) submitDemande();
   }, [step, isAuthenticated]);
 
   const update = (field, value) => setDevis(d => ({ ...d, [field]: value }));
@@ -67,10 +107,9 @@ function DemandeDevis() {
     setAuthLoading(true);
     try {
       await login(authEmail, authPassword);
-      setSuccess(true);
+      await submitDemande();
     } catch (err) {
       setAuthError(err.message || 'Email ou mot de passe incorrect.');
-    } finally {
       setAuthLoading(false);
     }
   };
@@ -201,6 +240,25 @@ function DemandeDevis() {
           </div>
         )}
 
+        {/* ── ÉTAPE 3 : ENVOI EN COURS (déjà connecté) ── */}
+        {step === 3 && isAuthenticated && !success && (
+          <div className="devis-step" style={{ textAlign: 'center', padding: '48px 24px' }}>
+            {submitting ? (
+              <>
+                <div style={{ width: 40, height: 40, border: '3px solid #E5E7EB', borderTopColor: '#4A7A5C', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
+                <p style={{ color: '#6B7280', fontSize: 15 }}>Envoi de votre demande…</p>
+              </>
+            ) : authError ? (
+              <>
+                <p style={{ color: '#DC2626', marginBottom: 16 }}>{authError}</p>
+                <button className="btn-devis-primary" onClick={() => { submitted.current = false; setAuthError(''); submitDemande(); }}>
+                  Réessayer
+                </button>
+              </>
+            ) : null}
+          </div>
+        )}
+
         {/* ── ÉTAPE 3 : AUTH WALL ── */}
         {step === 3 && !isAuthenticated && (
           <div className="devis-step">
@@ -210,6 +268,7 @@ function DemandeDevis() {
 
             <form className="devis-auth-form" onSubmit={handleLogin}>
               {authError && <div className="form-error-banner">{authError}</div>}
+
               <div className="form-group">
                 <label>Email</label>
                 <input

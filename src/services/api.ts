@@ -87,8 +87,22 @@ export const authAPI = {
   },
   login: async ({ email, motDePasse }) => {
     const data = await r(await fetch(`${API_URL}/api/auth/login`, { method: 'POST', headers: h(false), body: JSON.stringify({ email, motDePasse }) }));
+    const result = data.data;
+    if (result?.user?.email_verifie === false) {
+      const err: any = new Error('EMAIL_NOT_VERIFIED');
+      err.email = result.user.email;
+      throw err;
+    }
+    if (result?.token) setToken(result.token);
+    return result;
+  },
+  resendVerification: async (email: string) => {
+    return r(await fetch(`${API_URL}/api/auth/resend-verification`, { method: 'POST', headers: h(false), body: JSON.stringify({ email }) }));
+  },
+  verifyEmail: async (code: string, email: string) => {
+    const data = await r(await fetch(`${API_URL}/api/auth/verify-email`, { method: 'POST', headers: h(false), body: JSON.stringify({ code, email }) }));
     if (data?.data?.token) setToken(data.data.token);
-    return data.data; // { token, user: { id, email, role, profil } }
+    return data.data;
   },
   me: async () => {
     const data = await r(await fetch(`${API_URL}/api/auth/me`, { headers: h() }));

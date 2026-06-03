@@ -5,7 +5,6 @@ import { useAuth } from '../hooks/useAuth';
 import './Connexion.css';
 
 function Connexion() {
-  const [type, setType] = useState('particulier');
   const [email, setEmail] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -49,6 +48,10 @@ function Connexion() {
       const user = await login(email, motDePasse);
       navigate(getRedirectPath(user.role));
     } catch (err) {
+      if (err.message === 'EMAIL_NOT_VERIFIED') {
+        navigate('/verification', { state: { email: err.email || email } });
+        return;
+      }
       setError(err.message || 'Email ou mot de passe incorrect.');
     } finally {
       setLoading(false);
@@ -62,28 +65,6 @@ function Connexion() {
 
         <h1>Connexion</h1>
         <p className="connexion-subtitle">Accédez à votre espace personnel</p>
-
-        {/* CHOIX TYPE */}
-        <div className="type-selector">
-          <button
-            className={`type-btn ${type === 'particulier' ? 'active' : ''}`}
-            onClick={() => setType('particulier')}
-            type="button"
-          >
-            <span className="type-icon">🏠</span>
-            <span className="type-label">Particulier</span>
-            <span className="type-desc">Je cherche un artisan</span>
-          </button>
-          <button
-            className={`type-btn ${type === 'prestataire' ? 'active pro' : ''}`}
-            onClick={() => setType('prestataire')}
-            type="button"
-          >
-            <span className="type-icon">🔨</span>
-            <span className="type-label">Prestataire</span>
-            <span className="type-desc">Je suis un artisan</span>
-          </button>
-        </div>
 
         <form className="connexion-form" onSubmit={handleSubmit}>
           {error && <div className="form-error-banner">{error}</div>}
@@ -138,11 +119,7 @@ function Connexion() {
             </div>
           </div>
 
-          <button
-            type="submit"
-            className={`btn-connexion ${type === 'prestataire' ? 'pro' : ''}`}
-            disabled={loading}
-          >
+          <button type="submit" className="btn-connexion" disabled={loading}>
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
@@ -170,10 +147,12 @@ function Connexion() {
 
         <p className="connexion-footer">
           Pas encore de compte ?{' '}
-          {type === 'prestataire'
-            ? <Link to="/pro">Rejoindre le réseau →</Link>
-            : <Link to="/inscription-client">Créer un compte</Link>
-          }
+          <Link to="/inscription-client">Créer un compte</Link>
+        </p>
+
+        <p className="connexion-footer" style={{ marginTop: 8 }}>
+          Vous êtes artisan ?{' '}
+          <Link to="/pro">Rejoindre le réseau →</Link>
         </p>
       </div>
     </div>

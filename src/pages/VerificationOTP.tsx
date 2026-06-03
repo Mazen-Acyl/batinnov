@@ -1,12 +1,17 @@
 import { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { authAPI } from '../services/api';
 import './Auth.css';
 
 function VerificationOTP() {
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
   const inputs = useRef([]);
   const navigate = useNavigate();
+  const location = useLocation();
+  const email: string = location.state?.email || '';
 
   const handleChange = (index, value) => {
     if (!/^\d?$/.test(value)) return;
@@ -22,13 +27,30 @@ function VerificationOTP() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const fullCode = code.join('');
-    if (fullCode === '123456' || fullCode.length === 6) {
+    if (fullCode.length < 6) { setError('Entrez le code à 6 chiffres.'); return; }
+    setError('');
+    setLoading(true);
+    try {
+      await authAPI.verifyEmail(fullCode, email);
       navigate('/dashboard-client');
-    } else {
-      setError('Code invalide. Réessayez.');
+    } catch (err: any) {
+      setError(err.message || 'Code invalide. Réessayez.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!email) return;
+    try {
+      await authAPI.resendVerification(email);
+      setResendSent(true);
+      setTimeout(() => setResendSent(false), 5000);
+    } catch {
+      setError('Impossible de renvoyer le code.');
     }
   };
 
@@ -46,7 +68,8 @@ function VerificationOTP() {
 
         <h1>Vérifier votre email</h1>
         <p className="auth-subtitle">
-          Code à 6 chiffres envoyé à<br /><strong>votre email</strong>
+          Code à 6 chiffres envoyé à<br />
+          <strong>{email || 'votre email'}</strong>
         </p>
 
         <form onSubmit={handleSubmit} className="auth-form">
@@ -68,20 +91,16 @@ function VerificationOTP() {
           </div>
 
           {error && <p className="auth-error">{error}</p>}
+          {resendSent && <p style={{ color: '#4A7A5C', fontSize: '0.85rem', textAlign: 'center' }}>Code renvoyé !</p>}
 
-          <button type="submit" className="auth-btn">Confirmer</button>
+          <button type="submit" className="auth-btn" disabled={loading}>
+            {loading ? 'Vérification…' : 'Confirmer'}
+          </button>
         </form>
 
-        <button
-          className="auth-resend"
-          onClick={() => setCode(['', '', '', '', '', ''])}
-        >
+        <button className="auth-resend" onClick={handleResend} disabled={!email}>
           Renvoyer le code
         </button>
-
-        <p className="auth-demo-hint">
-          Mode démo : entrez <strong>123456</strong> pour valider.
-        </p>
       </div>
     </div>
   );

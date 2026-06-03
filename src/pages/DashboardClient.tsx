@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { authAPI, demandesAPI, devisAPI, paiementsAPI, conversationsAPI, rendezVousAPI, notificationsAPI, prestatairesAPI, normalizeDate, normalizeMontant, batchFetchById } from '../services/api';
+import { authAPI, clientsAPI, demandesAPI, devisAPI, paiementsAPI, conversationsAPI, rendezVousAPI, notificationsAPI, prestatairesAPI, normalizeDate, normalizeMontant, batchFetchById } from '../services/api';
 import './DashboardClient.css';
 
 // ─── Notifications ────────────────────────────────────────────────────────────
@@ -163,6 +163,10 @@ function DashboardClient() {
     email: user?.email ?? '',
     telephone: '', adresse: ''
   });
+  const [clientProfileId, setClientProfileId] = useState<string>('');
+  const [photoUrl, setPhotoUrl] = useState<string>(() => localStorage.getItem('batinnov_avatar') ?? '');
+  const [savingProfil, setSavingProfil] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const client = {
     prenom: clientForm.prenom, nom: clientForm.nom,
@@ -175,6 +179,43 @@ function DashboardClient() {
   const [autoSign, setAutoSign] = useState(false);
   const [showSigModal, setShowSigModal] = useState(false);
   const [sigStyle, setSigStyle] = useState(0);
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string>(() => localStorage.getItem('batinnov_signature') ?? '');
+  const sigCanvasRef = useRef<HTMLCanvasElement>(null);
+  const sigDrawing = useRef(false);
+
+  const sigStart = (e: React.MouseEvent | React.TouchEvent) => {
+    sigDrawing.current = true;
+    const canvas = sigCanvasRef.current; if (!canvas) return;
+    const ctx = canvas.getContext('2d'); if (!ctx) return;
+    const r = canvas.getBoundingClientRect();
+    const x = 'touches' in e ? e.touches[0].clientX - r.left : e.clientX - r.left;
+    const y = 'touches' in e ? e.touches[0].clientY - r.top  : e.clientY - r.top;
+    ctx.beginPath(); ctx.moveTo(x, y);
+  };
+  const sigMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!sigDrawing.current) return;
+    e.preventDefault();
+    const canvas = sigCanvasRef.current; if (!canvas) return;
+    const ctx = canvas.getContext('2d'); if (!ctx) return;
+    const r = canvas.getBoundingClientRect();
+    const x = 'touches' in e ? e.touches[0].clientX - r.left : e.clientX - r.left;
+    const y = 'touches' in e ? e.touches[0].clientY - r.top  : e.clientY - r.top;
+    ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.strokeStyle = '#1B4332';
+    ctx.lineTo(x, y); ctx.stroke();
+  };
+  const sigEnd = () => { sigDrawing.current = false; };
+  const sigClear = () => {
+    const canvas = sigCanvasRef.current; if (!canvas) return;
+    canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+  };
+  const sigSave = () => {
+    const canvas = sigCanvasRef.current; if (!canvas) return;
+    const url = canvas.toDataURL('image/png');
+    setSignatureDataUrl(url);
+    localStorage.setItem('batinnov_signature', url);
+    showNotif('Signature enregistrée ✓');
+    setShowSigModal(false);
+  };
   const [notifEmail, setNotifEmail] = useState(true);
   const [notifSMS, setNotifSMS] = useState(true);
   const [newsletter, setNewsletter] = useState(false);
@@ -390,6 +431,7 @@ function DashboardClient() {
       /* Profil — /api/auth/me retourne { id, email, role, profil: { id, prenom, nom, ... } } */
       const me = await authAPI.me();
       const profil = me?.profil;
+      setClientProfileId(profil?.id ?? '');
       setClientForm({
         prenom:    profil?.prenom    ?? '',
         nom:       profil?.nom       ?? '',
@@ -414,14 +456,13 @@ function DashboardClient() {
         setDemandes(adapted);
       } catch { /* laisse vide */ }
 
-      /* Devis reçus (artisans proposant un devis) */
+      /* Devis reçus — filtrés par clientId */
       try {
-        const devisRaw = await devisAPI.getAll();
+        const clientId = profil?.id;
+        const devisRaw = clientId ? await devisAPI.getAll({ clientId }) : [];
         const list = Array.isArray(devisRaw) ? devisRaw : [];
         setArtisans(list.map((d: any, i: number) => ({
           id:         d.id ?? i,
-          // La liste devis retourne clientNom/clientPrenom mais PAS le prestataire
-          // On affiche le numéro de devis comme identifiant
           nom:        d.objet ?? `Devis ${d.numero ?? i+1}`,
           metier:     '—',
           note:       0,
@@ -437,10 +478,13 @@ function DashboardClient() {
         })));
       } catch { /* laisse vide */ }
 
-      /* Factures / paiements */
+      /* Factures / paiements — filtrés par clientId */
       try {
-        const paiementsRaw = await paiementsAPI.getAll();
-        const list = Array.isArray(paiementsRaw) ? paiementsRaw : [];
+        const clientId = profil?.id;
+        const paiementsRaw = clientId ? await paiementsAPI.getAll() : [];
+        const list = (Array.isArray(paiementsRaw) ? paiementsRaw : []).filter(
+          (p: any) => !clientId || p.clientId === clientId || p.devis?.clientId === clientId
+        );
         setInvoices(list.map((p: any) => ({
           id:        p.id,
           number:    p.reference ?? `PAY-${p.id?.slice(0,8) ?? ''}`,
@@ -455,30 +499,14 @@ function DashboardClient() {
         })));
       } catch { /* laisse vide */ }
 
-      /* RDV + Conversations — batch-fetch prestataires pour avoir leurs noms */
+      /* RDV */
       try {
-        const [rdvsRaw, convsRaw] = await Promise.all([
-          rendezVousAPI.list(),
-          conversationsAPI.list(),
-        ]);
-        const rdvList  = Array.isArray(rdvsRaw)  ? rdvsRaw  : [];
-        const convList = Array.isArray(convsRaw) ? convsRaw : [];
+        const rdvsRaw = await rendezVousAPI.list();
+        const rdvList = Array.isArray(rdvsRaw) ? rdvsRaw : [];
 
-        // Collecte tous les prestataireIds uniques
-        const presIds = [...new Set([
-          ...rdvList.map((r: any) => r.prestataireId).filter(Boolean),
-          ...convList.map((c: any) => c.prestataireId).filter(Boolean),
-        ])];
-
-        // Batch fetch des prestataires (max 5 en parallèle)
-        const presMap = await batchFetchById(
-          (id) => prestatairesAPI.getById(id),
-          presIds
-        );
-        const presName = (id: string) => {
-          const p = presMap.get(id) as any;
-          return p?.raisonSociale ?? '—';
-        };
+        const presIds = [...new Set(rdvList.map((r: any) => r.prestataireId).filter(Boolean))];
+        const presMap = await batchFetchById((id) => prestatairesAPI.getById(id), presIds);
+        const presName = (id: string) => { const p = presMap.get(id) as any; return p?.raisonSociale ?? '—'; };
 
         setAgenda(rdvList.map((r: any) => ({
           id:      r.id,
@@ -491,8 +519,15 @@ function DashboardClient() {
           lieu:    r.lieu ?? '',
         })));
 
+        /* Messages — filtrés par le backend via JWT, on n'affiche que les vraies conversations */
+        const convsRaw = await conversationsAPI.list();
+        const convList = Array.isArray(convsRaw) ? convsRaw : [];
+        const convPresIds = [...new Set(convList.map((c: any) => c.prestataireId).filter(Boolean))];
+        const convPresMap = await batchFetchById((id) => prestatairesAPI.getById(id), convPresIds);
+        const convPresName = (id: string) => { const p = convPresMap.get(id) as any; return p?.raisonSociale ?? '—'; };
+
         setConversations(convList.map((c: any) => {
-          const nom = presName(c.prestataireId);
+          const nom = convPresName(c.prestataireId);
           return {
             id:       c.id,
             nom:      nom !== '—' ? nom : (c.sujet ?? `Conv. ${c.id?.slice(0,6) ?? ''}`),
@@ -501,7 +536,7 @@ function DashboardClient() {
             metier:   '—',
             note:     0,
             service:  c.sujet ?? '—',
-            messages: [], // chargés séparément via /conversations/:id/messages
+            messages: [],
           };
         }));
       } catch { /* laisse vide */ }
@@ -560,8 +595,37 @@ function DashboardClient() {
   };
 
   /* ── Handler profil ── */
-  const handleSauvegarderProfil = () => {
-    showNotif('Profil sauvegardé avec succès ✓');
+  const handleSauvegarderProfil = async () => {
+    if (!clientProfileId) { showNotif('Profil introuvable', 'error'); return; }
+    setSavingProfil(true);
+    try {
+      await clientsAPI.update(clientProfileId, {
+        prenom:    clientForm.prenom,
+        nom:       clientForm.nom,
+        telephone: clientForm.telephone,
+        adresse:   clientForm.adresse,
+      });
+      showNotif('Profil sauvegardé ✓');
+    } catch (err: any) {
+      showNotif(err.message || 'Erreur lors de la sauvegarde', 'error');
+    } finally {
+      setSavingProfil(false);
+    }
+  };
+
+  /* ── Handler photo ── */
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { showNotif('Photo trop lourde (max 2 Mo)', 'error'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = reader.result as string;
+      setPhotoUrl(url);
+      localStorage.setItem('batinnov_avatar', url);
+      showNotif('Photo mise à jour ✓');
+    };
+    reader.readAsDataURL(file);
   };
 
   const serviceIcon = (service: string) => {
@@ -600,6 +664,15 @@ function DashboardClient() {
     { id: 'messages',  label: 'Messages',  badge: conversations.filter(c => !c.lu).length },
     { id: 'agenda',    label: 'Agenda',    badge: agenda.filter(e => e.statut === 'a_confirmer').length },
   ];
+
+  const EmptyState = ({ icon, title, sub, cta }: { icon: React.ReactNode; title: string; sub: string; cta?: React.ReactNode }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '56px 24px', gap: 12, textAlign: 'center' }}>
+      <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF' }}>{icon}</div>
+      <strong style={{ color: '#374151', fontSize: 15 }}>{title}</strong>
+      <span style={{ color: '#9CA3AF', fontSize: 13, maxWidth: 280 }}>{sub}</span>
+      {cta}
+    </div>
+  );
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', flexDirection: 'column', gap: 16, background: '#F9FAF5' }}>
@@ -766,6 +839,14 @@ function DashboardClient() {
               </div>
 
               <div className="demandes-full-list">
+                {demandes.length === 0 && (
+                  <EmptyState
+                    icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>}
+                    title="Aucune demande pour le moment"
+                    sub="Faites votre première demande de devis et suivez son avancement ici."
+                    cta={<Link to="/devis" className="btn-primary-green" style={{ marginTop: 4 }}>+ Nouvelle demande</Link>}
+                  />
+                )}
                 {demandes.map(d => {
                   const sc = STAGE_CFG[d.stage];
                   const currentStep = STAGE_STEPS.indexOf(d.stage);
@@ -876,6 +957,13 @@ function DashboardClient() {
               {/* ── Vue liste (défaut) ── */}
               {!quoteCompareMode && (
                 <div className="devis-list">
+                  {artisans.length === 0 && (
+                    <EmptyState
+                      icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>}
+                      title="Aucun devis reçu"
+                      sub="Vos devis apparaîtront ici une fois que les artisans auront répondu à vos demandes."
+                    />
+                  )}
                   {artisans.map(a => (
                     <div key={a.id} className={`devis-card ${a.accepte ? 'accepte' : ''}`}>
                       <div className="devis-artisan">
@@ -1031,6 +1119,13 @@ function DashboardClient() {
 
               {selectedChantier === null ? (
                 <div className="chantier-grid">
+                  {chantiers_detail.length === 0 && (
+                    <EmptyState
+                      icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>}
+                      title="Aucun chantier en cours"
+                      sub="Vos chantiers actifs s'afficheront ici une fois qu'un devis aura été accepté et le paiement effectué."
+                    />
+                  )}
                   {chantiers_detail.map(ch => {
                     const sc = CHANTIER_STATUS_CONFIG[ch.statut];
                     const doneCount = ch.checklist.filter(s => s.done).length;
@@ -1272,6 +1367,13 @@ function DashboardClient() {
             <div className="client-page">
               <h1>Documents</h1>
               <div className="documents-list">
+                {documents.length === 0 && (
+                  <EmptyState
+                    icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>}
+                    title="Aucun document disponible"
+                    sub="Vos contrats, devis signés et factures seront accessibles ici une fois vos chantiers démarrés."
+                  />
+                )}
                 {documents.map(doc => (
                   <div key={doc.id} className="document-row">
                     <div className="doc-icon">
@@ -1314,6 +1416,13 @@ function DashboardClient() {
                 </button>
               </div>
               <div className="agenda-list">
+                {agenda.length === 0 && (
+                  <EmptyState
+                    icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>}
+                    title="Aucun rendez-vous"
+                    sub="Vos prochains rendez-vous avec les artisans s'afficheront ici."
+                  />
+                )}
                 {agenda.map(ev => (
                   <div key={ev.id} className="agenda-card">
                     <div className="agenda-date-block">
@@ -1425,7 +1534,11 @@ function DashboardClient() {
                     </button>
                   ))}
                   {filteredConvs.length === 0 && (
-                    <p style={{ fontSize: 13, color: '#9CA3AF', padding: '20px 18px' }}>Aucune conversation trouvée</p>
+                    <EmptyState
+                      icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>}
+                      title="Aucun message"
+                      sub="Vos échanges avec les artisans apparaîtront ici."
+                    />
                   )}
                 </div>
 
@@ -1761,7 +1874,10 @@ function DashboardClient() {
                 {/* ── Carte identité (gauche) ── */}
                 <div className="profil-identity-card">
                   <div className="profil-avatar-wrap">
-                    <div className="profil-avatar-xl">{client.avatar}</div>
+                    {photoUrl
+                      ? <img src={photoUrl} alt="avatar" className="profil-avatar-xl" style={{ objectFit: 'cover', borderRadius: '50%' }} />
+                      : <div className="profil-avatar-xl">{client.avatar}</div>
+                    }
                     <div className="profil-verified">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                     </div>
@@ -1770,13 +1886,13 @@ function DashboardClient() {
                   <span className="profil-role-tag">Client Batinnov</span>
                   <div className="profil-id-stats">
                     <div className="profil-id-stat">
-                      <strong>{chantiers_detail.length}</strong>
-                      <span>Chantiers</span>
+                      <strong>{demandes.length}</strong>
+                      <span>Demandes</span>
                     </div>
                     <div className="profil-id-sep" />
                     <div className="profil-id-stat">
-                      <strong>{documents.length}</strong>
-                      <span>Documents</span>
+                      <strong>{artisans.length}</strong>
+                      <span>Devis</span>
                     </div>
                     <div className="profil-id-sep" />
                     <div className="profil-id-stat">
@@ -1784,9 +1900,24 @@ function DashboardClient() {
                       <span>RDV</span>
                     </div>
                   </div>
-                  <button className="profil-photo-btn" onClick={() => showNotif('Modification de photo — bientôt disponible')}>
-                    Modifier la photo
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={handlePhotoChange}
+                  />
+                  <button className="profil-photo-btn" onClick={() => photoInputRef.current?.click()}>
+                    {photoUrl ? 'Changer la photo' : 'Ajouter une photo'}
                   </button>
+                  {photoUrl && (
+                    <button
+                      style={{ background: 'none', border: 'none', color: '#9CA3AF', fontSize: 12, cursor: 'pointer', marginTop: 4 }}
+                      onClick={() => { setPhotoUrl(''); localStorage.removeItem('batinnov_avatar'); }}
+                    >
+                      Supprimer la photo
+                    </button>
+                  )}
                 </div>
 
                 {/* ── Colonne droite ── */}
@@ -1807,58 +1938,41 @@ function DashboardClient() {
                           <div className={`profil-field-icon ${f.cls}`}>{f.icon}</div>
                           <div className="profil-field-content">
                             <label>{f.label}</label>
-                            <input value={clientForm[f.key]} onChange={e => setClientForm(prev => ({ ...prev, [f.key]: e.target.value }))} />
+                            <input
+                              value={clientForm[f.key]}
+                              onChange={e => f.key !== 'email' ? setClientForm(prev => ({ ...prev, [f.key]: e.target.value })) : undefined}
+                              readOnly={f.key === 'email'}
+                              style={f.key === 'email' ? { background: '#F9FAFB', color: '#9CA3AF', cursor: 'not-allowed' } : {}}
+                            />
                           </div>
                         </div>
                       ))}
                     </div>
-                    <button className="btn-save-client" onClick={handleSauvegarderProfil}>Enregistrer les modifications</button>
+                    <button className="btn-save-client" onClick={handleSauvegarderProfil} disabled={savingProfil}>
+                      {savingProfil ? 'Sauvegarde…' : 'Enregistrer les modifications'}
+                    </button>
                   </div>
 
                   {/* SIGNATURE ÉLECTRONIQUE */}
                   <div className="profil-section-card">
                     <div className="profil-sig-top">
-                      <div>
-                        <h3 className="profil-card-title" style={{ marginBottom: 6 }}>Signature électronique</h3>
-                        <span className="profil-eidas-badge">
-                          <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-                          eIDAS certifiée
-                        </span>
-                      </div>
-                      <button className="profil-sig-renew" onClick={() => setShowSigModal(true)}>Modifier</button>
+                      <h3 className="profil-card-title" style={{ marginBottom: 6 }}>Signature électronique</h3>
+                      <button className="profil-sig-renew" onClick={() => setShowSigModal(true)}>
+                        {signatureDataUrl ? 'Modifier' : 'Créer ma signature'}
+                      </button>
                     </div>
-                    <div className="profil-sig-preview">
-                      {sigStyle === 0 && (
-                        <svg width="200" height="56" viewBox="0 0 200 56">
-                          <path d="M14 38 C22 18, 36 14, 44 26 C52 38, 55 16, 68 20 C78 23, 86 18, 96 28 C103 35, 107 28, 115 30" stroke="#1B4332" strokeWidth="2" fill="none" strokeLinecap="round"/>
-                          <path d="M115 30 L124 26" stroke="#1B4332" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
-                          <path d="M36 44 Q44 50, 52 44" stroke="#1B4332" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
-                        </svg>
-                      )}
-                      {sigStyle === 1 && (
-                        <svg width="200" height="56" viewBox="0 0 200 56">
-                          <path d="M12 36 C18 8, 36 6, 44 20 C52 34, 56 10, 72 14 C82 17, 90 12, 102 22 C110 28, 114 22, 124 24" stroke="#1B4332" strokeWidth="3.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M124 24 L134 20" stroke="#1B4332" strokeWidth="3" fill="none" strokeLinecap="round"/>
-                        </svg>
-                      )}
-                      {sigStyle === 2 && (
-                        <svg width="200" height="56" viewBox="0 0 200 56">
-                          <path d="M10 42 C24 10, 30 42, 44 20 C54 4, 60 38, 76 24 C86 14, 94 30, 108 26 C118 23, 125 30, 138 24" stroke="#1B4332" strokeWidth="2" fill="none" strokeLinecap="round"/>
-                          <line x1="44" y1="47" x2="72" y2="47" stroke="#1B4332" strokeWidth="1.2" strokeLinecap="round"/>
-                        </svg>
-                      )}
+                    <div className="profil-sig-preview" style={{ minHeight: 72, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {signatureDataUrl
+                        ? <img src={signatureDataUrl} alt="Ma signature" style={{ maxHeight: 64, maxWidth: '100%' }} />
+                        : <span style={{ color: '#9CA3AF', fontSize: 13 }}>Aucune signature enregistrée</span>
+                      }
                     </div>
-                    <div className="profil-toggle-row">
-                      <div className="profil-toggle-label">
-                        <strong>Signature automatique</strong>
-                        <span>Appliquer ma signature automatiquement</span>
-                      </div>
-                      <button
-                        className={`profil-toggle-btn ${autoSign ? 'on' : ''}`}
-                        onClick={() => { setAutoSign(v => !v); showNotif(autoSign ? 'Signature automatique désactivée' : 'Signature automatique activée ✓'); }}
-                        aria-label="Toggle signature automatique"
-                      />
-                    </div>
+                    {signatureDataUrl && (
+                      <button style={{ background: 'none', border: 'none', color: '#9CA3AF', fontSize: 12, cursor: 'pointer', marginTop: 4 }}
+                        onClick={() => { setSignatureDataUrl(''); localStorage.removeItem('batinnov_signature'); }}>
+                        Supprimer la signature
+                      </button>
+                    )}
                   </div>
 
                   {/* PRÉFÉRENCES */}
@@ -1926,30 +2040,39 @@ function DashboardClient() {
                 </div>
               </div>
 
-              {/* ── MODAL SIGNATURE ── */}
+              {/* ── MODAL SIGNATURE DESSINABLE ── */}
               {showSigModal && (
                 <div className="profil-modal-overlay" onClick={() => setShowSigModal(false)}>
-                  <div className="profil-modal" onClick={e => e.stopPropagation()}>
+                  <div className="profil-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 480 }}>
                     <div className="profil-modal-head">
-                      <h3>Style de signature</h3>
+                      <h3>Ma signature</h3>
                       <button className="profil-modal-close" onClick={() => setShowSigModal(false)}>×</button>
                     </div>
-                    <p className="profil-modal-sub">Choisissez le style qui vous correspond</p>
-                    <div className="profil-sig-styles">
-                      {[
-                        { label: 'Élégante', svg: <svg width="130" height="44" viewBox="0 0 130 44"><path d="M10 32 C16 14, 28 10, 35 20 C42 30, 44 12, 54 15 C62 17, 68 13, 76 21 C82 27, 84 21, 90 23" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round"/><path d="M90 23 L97 20" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round"/><path d="M28 36 Q34 40, 40 36" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round"/></svg> },
-                        { label: 'Classique', svg: <svg width="130" height="44" viewBox="0 0 130 44"><path d="M8 30 C14 6, 30 4, 36 16 C42 28, 46 8, 58 11 C66 14, 72 9, 82 18 C88 23, 91 18, 100 20" stroke="currentColor" strokeWidth="2.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg> },
-                        { label: 'Moderne', svg: <svg width="130" height="44" viewBox="0 0 130 44"><path d="M8 36 C18 8, 24 36, 36 16 C44 2, 50 30, 62 18 C70 9, 76 22, 88 18 C96 15, 100 22, 110 18" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round"/><line x1="36" y1="40" x2="56" y2="40" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/></svg> },
-                      ].map((style, i) => (
-                        <button key={i} className={`profil-sig-style-btn ${sigStyle === i ? 'selected' : ''}`} onClick={() => setSigStyle(i)}>
-                          <div className="profil-sig-style-preview">{style.svg}</div>
-                          <span>{style.label}</span>
-                        </button>
-                      ))}
+                    <p className="profil-modal-sub">Signez dans le cadre ci-dessous à la souris ou au doigt</p>
+                    <canvas
+                      ref={sigCanvasRef}
+                      width={420}
+                      height={140}
+                      style={{ width: '100%', height: 140, border: '1.5px solid #E5E7EB', borderRadius: 10, background: '#FAFAFA', cursor: 'crosshair', touchAction: 'none' }}
+                      onMouseDown={sigStart}
+                      onMouseMove={sigMove}
+                      onMouseUp={sigEnd}
+                      onMouseLeave={sigEnd}
+                      onTouchStart={sigStart}
+                      onTouchMove={sigMove}
+                      onTouchEnd={sigEnd}
+                    />
+                    <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+                      <button
+                        onClick={sigClear}
+                        style={{ flex: 1, padding: '10px 0', border: '1.5px solid #E5E7EB', borderRadius: 8, background: '#fff', color: '#6B7280', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                      >
+                        Effacer
+                      </button>
+                      <button className="btn-save-client" style={{ flex: 2, margin: 0 }} onClick={sigSave}>
+                        Enregistrer la signature
+                      </button>
                     </div>
-                    <button className="btn-save-client" style={{ width: '100%', marginTop: 4 }} onClick={() => { showNotif('Signature mise à jour ✓'); setShowSigModal(false); }}>
-                      Valider cette signature
-                    </button>
                   </div>
                 </div>
               )}
