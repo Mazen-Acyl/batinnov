@@ -50,10 +50,18 @@ export interface AuthResult {
   user: User;
 }
 
-/* Cookie HTTP-only — le token est géré par le navigateur, jamais en localStorage */
-const h = () => ({ 'Content-Type': 'application/json' });
+export const getToken = (): string | null => localStorage.getItem('batinnov_token');
+export const setToken = (t: string): void => localStorage.setItem('batinnov_token', t);
+export const removeToken = (): void => localStorage.removeItem('batinnov_token');
 
-/* Wrapper fetch avec credentials: 'include' pour envoyer le cookie automatiquement */
+const h = () => {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const t = getToken();
+  if (t) headers['Authorization'] = `Bearer ${t}`;
+  return headers;
+};
+
+/* credentials: 'include' envoie aussi le cookie HTTP-only */
 const f = (url: string, init: RequestInit = {}) =>
   fetch(url, { ...init, credentials: 'include' });
 
@@ -63,7 +71,7 @@ const r = async (res: Response, isLogin = false) => {
   if (!res.ok) {
     const msg = data?.error?.message || data?.message || data?.error;
     if (res.status === 401 && isLogin) throw new Error('Email ou mot de passe incorrect.');
-    if (res.status === 401) throw new Error('SESSION_EXPIRED');
+    if (res.status === 401) throw new Error('NOT_AUTHENTICATED');
     if (res.status === 409) throw new Error('Un compte existe déjà avec ces informations.');
     if (res.status === 0 || !res.status) throw new Error('Impossible de joindre le serveur. Vérifiez votre connexion.');
     throw new Error(typeof msg === 'string' ? msg : 'Une erreur est survenue. Réessayez.');
@@ -75,10 +83,12 @@ const r = async (res: Response, isLogin = false) => {
 export const authAPI = {
   registerClient: async (body) => {
     const data = await r(await f(`${API_URL}/api/auth/register/client`, { method: 'POST', headers: h(), body: JSON.stringify(body) }));
+    if (data?.data?.token) setToken(data.data.token);
     return data.data;
   },
   registerPrestataire: async (body) => {
     const data = await r(await f(`${API_URL}/api/auth/register/prestataire`, { method: 'POST', headers: h(), body: JSON.stringify(body) }));
+    if (data?.data?.token) setToken(data.data.token);
     return data.data;
   },
   login: async ({ email, motDePasse }) => {
@@ -89,6 +99,7 @@ export const authAPI = {
       err.email = result.user.email;
       throw err;
     }
+    if (result?.token) setToken(result.token);
     return result;
   },
   resendVerification: async (email: string) => {
@@ -107,12 +118,11 @@ export const authAPI = {
   },
   loginGoogle: async (googleToken) => {
     const data = await r(await f(`${API_URL}/api/auth/google/token`, { method: 'POST', headers: h(), body: JSON.stringify({ idToken: googleToken }) }));
+    if (data?.data?.token) setToken(data.data.token);
     return data.data;
   },
-  logout: async () => {
-    try { await f(`${API_URL}/api/auth/logout`, { method: 'POST', headers: h() }); } catch { /* ignore */ }
-  },
-  isAuthenticated: () => true, // le cookie HTTP-only est vérifié par le serveur via /auth/me
+  logout: () => removeToken(),
+  isAuthenticated: () => !!getToken(), // le cookie HTTP-only est vérifié par le serveur via /auth/me
 };
 
 // ── PROSPECTS ─────────────────────────────────────────────────

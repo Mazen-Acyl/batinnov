@@ -24,10 +24,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const init = async () => {
       try {
         const me = await authAPI.me();
-        setUser(me);
-      } catch (err: any) {
+        const user = me?.user ?? me;
+        if (user?.id) setUser(user);
+      } catch {
         setUser(null);
-        // SESSION_EXPIRED = normal, pas une erreur à afficher
       }
       setLoading(false);
     };
@@ -86,8 +86,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = async (): Promise<void> => {
-    await authAPI.logout();
+  const logout = (): void => {
+    authAPI.logout();
     setUser(null);
   };
 

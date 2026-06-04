@@ -10,11 +10,13 @@ export default defineConfig({
         target: 'https://batinnov-api.onrender.com',
         changeOrigin: true,
         secure: true,
+        cookieDomainRewrite: 'localhost',
       },
       '/health': {
         target: 'https://batinnov-api.onrender.com',
         changeOrigin: true,
         secure: true,
+        cookieDomainRewrite: 'localhost',
       }
     }
   }
