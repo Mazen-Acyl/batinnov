@@ -38,8 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const result = await authAPI.login({ email, motDePasse });
-      setUser(result.user);
-      return result.user;
+      const user = result?.user ?? result;
+      setUser(user);
+      return user;
     } catch (err: any) {
       setError(err.message);
       throw err;
@@ -50,8 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const result = await authAPI.registerClient(data);
-      setUser(result.user);
-      return result.user;
+      const user = result?.user ?? result;
+      setUser(user);
+      return user;
     } catch (err: any) {
       setError(err.message);
       throw err;
@@ -62,8 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const result = await authAPI.registerPrestataire(data);
-      setUser(result.user);
-      return result.user;
+      const user = result?.user ?? result;
+      setUser(user);
+      return user;
     } catch (err: any) {
       setError(err.message);
       throw err;
@@ -74,8 +77,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const result = await authAPI.loginGoogle(googleToken);
-      setUser(result.user);
-      return result.user;
+      const user = result?.user ?? result;
+      setUser(user);
+      return user;
     } catch (err: any) {
       setError(err.message);
       throw err;
