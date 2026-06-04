@@ -106,7 +106,7 @@ export const authAPI = {
     return r(await f(`${API_URL}/api/auth/password`, { method: 'PATCH', headers: h(), body: JSON.stringify(body) }));
   },
   loginGoogle: async (googleToken) => {
-    const data = await r(await f(`${API_URL}/api/auth/google/token`, { method: 'POST', headers: h(), body: JSON.stringify({ googleToken }) }));
+    const data = await r(await f(`${API_URL}/api/auth/google/token`, { method: 'POST', headers: h(), body: JSON.stringify({ idToken: googleToken }) }));
     return data.data;
   },
   logout: async () => {
