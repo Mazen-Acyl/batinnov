@@ -31,8 +31,8 @@ function Connexion() {
       try {
         const user = await loginWithGoogle(tokenResponse.access_token);
         navigate(getRedirectPath(user.role));
-      } catch {
-        setError('Connexion Google échouée. Vérifiez votre compte et réessayez.');
+      } catch (err: any) {
+        setError(err.message || 'Connexion Google échouée. Vérifiez votre compte et réessayez.');
       } finally {
         setGoogleLoading(false);
       }

@@ -57,12 +57,13 @@ const h = () => ({ 'Content-Type': 'application/json' });
 const f = (url: string, init: RequestInit = {}) =>
   fetch(url, { ...init, credentials: 'include' });
 
-const r = async (res: Response) => {
+const r = async (res: Response, isLogin = false) => {
   let data: any = null;
   try { data = await res.json(); } catch { /* réponse vide */ }
   if (!res.ok) {
     const msg = data?.error?.message || data?.message || data?.error;
-    if (res.status === 401) throw new Error('Email ou mot de passe incorrect.');
+    if (res.status === 401 && isLogin) throw new Error('Email ou mot de passe incorrect.');
+    if (res.status === 401) throw new Error('SESSION_EXPIRED');
     if (res.status === 409) throw new Error('Un compte existe déjà avec ces informations.');
     if (res.status === 0 || !res.status) throw new Error('Impossible de joindre le serveur. Vérifiez votre connexion.');
     throw new Error(typeof msg === 'string' ? msg : 'Une erreur est survenue. Réessayez.');
@@ -81,7 +82,7 @@ export const authAPI = {
     return data.data;
   },
   login: async ({ email, motDePasse }) => {
-    const data = await r(await f(`${API_URL}/api/auth/login`, { method: 'POST', headers: h(), body: JSON.stringify({ email, motDePasse }) }));
+    const data = await r(await f(`${API_URL}/api/auth/login`, { method: 'POST', headers: h(), body: JSON.stringify({ email, motDePasse }) }), true);
     const result = data.data;
     if (result?.user?.email_verifie === false) {
       const err: any = new Error('EMAIL_NOT_VERIFIED');

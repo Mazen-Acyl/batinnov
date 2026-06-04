@@ -25,8 +25,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const me = await authAPI.me();
         setUser(me);
-      } catch {
+      } catch (err: any) {
         setUser(null);
+        // SESSION_EXPIRED = normal, pas une erreur à afficher
       }
       setLoading(false);
     };
