@@ -24,9 +24,9 @@ const SERVICES = {
     ]
   },
   courtage: {
-    titre: 'Courtage',
+    titre: 'Assistance à maîtrise d\'ouvrage',
     image: '/images/amenagement.jpg',
-    description: 'Trouvez le meilleur financement pour vos travaux grâce à nos experts en courtage.',
+    description: 'Pilotez, coordonnez et suivez vos projets de construction ou de rénovation avec nos experts en maîtrise d\'ouvrage.',
     sousServices: [
       'Prêt travaux',
       'Rachat de crédit',

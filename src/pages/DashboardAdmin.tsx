@@ -266,7 +266,7 @@ const SERVICE_ADMIN_VISUAL: Record<string, { label: string; color: string; bg: s
   travaux:  { label: 'Travaux',  color: '#D97706', bg: '#FFFBEB' },
   irve:     { label: 'IRVE',     color: '#10B981', bg: '#ECFDF5' },
   aide:     { label: 'Aide',     color: '#6366F1', bg: '#EEF2FF' },
-  courtage: { label: 'Courtage', color: '#F59E0B', bg: '#FEF3C7' },
+  courtage: { label: 'Assistance MOA', color: '#F59E0B', bg: '#FEF3C7' },
 };
 
 const SERVICE_FILTERS_ADMIN: { value: ServiceTypeAdmin; label: string }[] = [
@@ -274,7 +274,7 @@ const SERVICE_FILTERS_ADMIN: { value: ServiceTypeAdmin; label: string }[] = [
   { value: 'travaux',  label: 'Travaux' },
   { value: 'irve',     label: 'IRVE' },
   { value: 'aide',     label: 'Aide' },
-  { value: 'courtage', label: 'Courtage' },
+  { value: 'courtage', label: 'Assistance MOA' },
 ];
 
 const initDemandes: DemandeAdmin[] = [];
@@ -583,7 +583,7 @@ export default function DashboardAdmin() {
     irve:     { label: 'IRVE',     color: '#10B981', bg: '#ECFDF5' },
     travaux:  { label: 'Travaux',  color: '#D97706', bg: '#FFFBEB' },
     aide:     { label: 'Aide',     color: '#6366F1', bg: '#EEF2FF' },
-    courtage: { label: 'Courtage', color: '#F59E0B', bg: '#FEF3C7' },
+    courtage: { label: 'Assistance MOA', color: '#F59E0B', bg: '#FEF3C7' },
   };
 
   const PHOTO_PHASE_COLOR: Record<string, string> = {

@@ -6,7 +6,7 @@ const CATEGORIES = [
   { id: 'tout', label: 'Tout' },
   { id: 'irve', label: 'IRVE' },
   { id: 'travaux', label: 'Travaux' },
-  { id: 'courtage', label: 'Courtage' },
+  { id: 'courtage', label: 'Assistance à maîtrise d\'ouvrage' },
   { id: 'aide', label: 'Aide' }
 ];
 
@@ -56,8 +56,8 @@ const FAQS = [
   {
     id: 8,
     categorie: 'courtage',
-    question: 'Combien coûte le service de courtage ?',
-    reponse: 'Le service de courtage est entièrement gratuit pour les particuliers. Nous sommes rémunérés par les organismes financiers partenaires, sans frais supplémentaires pour vous.'
+    question: 'Combien coûte l\'assistance à maîtrise d\'ouvrage ?',
+    reponse: 'Le service d\'assistance à maîtrise d\'ouvrage est entièrement gratuit pour les particuliers. Nous sommes rémunérés par les organismes financiers partenaires, sans frais supplémentaires pour vous.'
   }
 ];
 
